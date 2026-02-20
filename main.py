@@ -8,9 +8,11 @@ app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
 
+from fastapi.responses import FileResponse
+
 @app.get("/")
-def read_root():
-    return {"message": "City Places Backend Running"}
+def serve_frontend():
+    return FileResponse("index.html")
 
 @app.get("/places")
 def get_places():
