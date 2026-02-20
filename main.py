@@ -1,47 +1,49 @@
 from fastapi import FastAPI
-from database import engine, Base
+from database import engine, Base, SessionLocal
 from models import Place
 from sqlalchemy.orm import Session
-from database import SessionLocal
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
 
-from fastapi.responses import FileResponse
 
 @app.get("/")
 def serve_frontend():
     return FileResponse("index.html")
 
+
 @app.get("/places")
 def get_places():
     db: Session = SessionLocal()
-    places = db.query(Place).all()
-    return places
+    return db.query(Place).all()
 
-from pydantic import BaseModel
 
 class PlaceCreate(BaseModel):
     name: str
-    category: str | None = None
-    description: str | None = None
+    rating: int = 0
+    average_price: int
+    street: str
+    type: str
+    work_time: str
 
 
 @app.post("/places")
 def create_place(place: PlaceCreate):
     db = SessionLocal()
+
     new_place = Place(
         name=place.name,
-        category=place.category,
-        description=place.description
+        rating=place.rating,
+        average_price=place.average_price,
+        street=place.street,
+        type=place.type,
+        work_time=place.work_time
     )
+
     db.add(new_place)
     db.commit()
     db.refresh(new_place)
     return new_place
-
-@app.get("/places")
-def get_places():
-    db = SessionLocal()
-    return db.query(Place).all()
