@@ -2,85 +2,107 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <title>City Places</title>
 
 <style>
-body{
+*{
   margin:0;
-  font-family:-apple-system,sans-serif;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+body{
   background:linear-gradient(180deg,#0f172a,#020617);
   color:white;
   padding-bottom:120px;
 }
 
-/* === GLASS === */
+/* ==== GLASS ==== */
 .glass{
   background:rgba(255,255,255,0.08);
   backdrop-filter:blur(20px);
-  border-radius:20px;
+  -webkit-backdrop-filter:blur(20px);
   border:1px solid rgba(255,255,255,0.15);
+  border-radius:20px;
 }
 
-/* === ADS === */
+/* ==== ADS ==== */
 .ads{
   display:flex;
   gap:12px;
-  overflow-x:auto;
   padding:16px;
+  overflow-x:auto;
 }
+
 .ad{
-  min-width:180px;
+  flex:0 0 30%;
   height:100px;
   border-radius:20px;
   overflow:hidden;
 }
+
 .ad img{
   width:100%;
   height:100%;
   object-fit:cover;
 }
 
-/* === MAP === */
+/* ==== MAP ==== */
 .map{
   margin:0 16px 20px 16px;
   padding:30px;
   text-align:center;
-  font-size:40px;
+  font-size:36px;
   font-weight:900;
 }
 
-/* === SEARCH + TYPES === */
+/* ==== SEARCH ==== */
 .search-block{
-  padding:0 16px;
-}
-.search{
-  padding:12px;
-  width:100%;
-  border-radius:15px;
-  border:none;
-  margin-bottom:10px;
-}
-.types{
-  display:flex;
-  gap:10px;
-  overflow-x:auto;
-}
-.type-btn{
-  padding:8px 14px;
-  border-radius:20px;
-  background:#1f2937;
-  border:none;
-  color:white;
+  padding:0 16px 16px 16px;
 }
 
-/* === FILTERS === */
+.search{
+  width:100%;
+  padding:12px;
+  border-radius:15px;
+  border:none;
+  margin-bottom:12px;
+}
+
+/* ==== CATEGORIES ==== */
+.categories{
+  display:flex;
+  justify-content:space-between;
+}
+
+.cat{
+  text-align:center;
+  cursor:pointer;
+}
+
+.cat-icon{
+  width:60px;
+  height:60px;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:26px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(10px);
+  margin-bottom:6px;
+}
+
+/* ==== FILTERS ==== */
 .filters{
   display:flex;
   gap:10px;
   padding:16px;
 }
+
 .chip{
   padding:8px 16px;
   border-radius:20px;
@@ -88,11 +110,12 @@ body{
   background:#1f2937;
   color:white;
 }
+
 .chip.active{
   background:#2563eb;
 }
 
-/* === GRID === */
+/* ==== GRID ==== */
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -103,14 +126,15 @@ body{
 .card{
   overflow:hidden;
   position:relative;
+  animation:fadeIn 0.4s ease;
 }
+
 .card img{
   width:100%;
   height:130px;
   object-fit:cover;
 }
 
-/* rating like Pepper */
 .rating{
   position:absolute;
   top:8px;
@@ -120,11 +144,7 @@ body{
   border-radius:20px;
   font-size:12px;
 }
-.rating span{
-  color:#22c55e;
-}
 
-/* favorite */
 .fav{
   position:absolute;
   top:8px;
@@ -136,16 +156,17 @@ body{
 .card-info{
   padding:10px;
 }
+
 .card-info h3{
   margin:4px 0;
 }
+
 .card-info p{
   margin:2px 0;
   font-size:12px;
   color:#9ca3af;
 }
 
-/* bottom nav */
 .bottom-nav{
   position:fixed;
   bottom:20px;
@@ -155,11 +176,18 @@ body{
   justify-content:space-around;
   padding:14px;
 }
+
 .bottom-nav div{
   text-align:center;
 }
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(10px);}
+  to{opacity:1; transform:translateY(0);}
+}
 </style>
 </head>
+
 <body>
 
 <!-- ADS -->
@@ -175,11 +203,23 @@ body{
 <!-- SEARCH -->
 <div class="search-block">
   <input class="search" placeholder="Поиск заведения...">
-  <div class="types">
-    <button class="type-btn">Бар</button>
-    <button class="type-btn">Кафе</button>
-    <button class="type-btn">Ресторан</button>
-    <button class="type-btn">Фастфуд</button>
+  <div class="categories">
+    <div class="cat" onclick="filterByType('bar')">
+      <div class="cat-icon">🍸</div>
+      <span>Бар</span>
+    </div>
+    <div class="cat" onclick="filterByType('cafe')">
+      <div class="cat-icon">☕</div>
+      <span>Кафе</span>
+    </div>
+    <div class="cat" onclick="filterByType('restaurant')">
+      <div class="cat-icon">🍽</div>
+      <span>Ресторан</span>
+    </div>
+    <div class="cat" onclick="filterByType('fastfood')">
+      <div class="cat-icon">🍔</div>
+      <span>Фастфуд</span>
+    </div>
   </div>
 </div>
 
@@ -188,7 +228,6 @@ body{
   <button class="chip active">Все</button>
   <button class="chip">Рядом</button>
   <button class="chip">Популярные</button>
-  <button class="chip">Новые</button>
 </div>
 
 <!-- GRID -->
@@ -204,20 +243,37 @@ body{
 </div>
 
 <script>
-const API_URL="https://ТВОЙ-railway-url.up.railway.app";
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+const API_URL = "https://city-places-app-production.up.railway.app";
+
+let places = [];
+let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 
 async function load(){
-  const res=await fetch(API_URL+"/places");
-  const data=await res.json();
-  const container=document.getElementById("places");
+  const res = await fetch(API_URL + "/places");
+  places = await res.json();
+  renderPlaces(places);
+}
+
+function renderPlaces(data){
+  const container = document.getElementById("places");
   container.innerHTML="";
 
   data.forEach(p=>{
+    const isFav = favorites.includes(p.id);
+
     container.innerHTML+=`
       <div class="card glass">
         <img src="https://source.unsplash.com/400x300/?restaurant">
-        <div class="rating"><span>⬆</span> ${p.rating}</div>
-        <div class="fav">🤍</div>
+        <div class="rating">
+          <span style="color:${getRatingColor(p.rating)}">⬆</span>
+          ${p.rating}
+        </div>
+        <div class="fav" onclick="toggleFavorite(${p.id})">
+          ${isFav ? "❤️" : "🤍"}
+        </div>
         <div class="card-info">
           <h3>${p.name}</h3>
           <p>Средний чек: ${p.average_price}₽</p>
@@ -229,6 +285,28 @@ async function load(){
     `;
   });
 }
+
+function toggleFavorite(id){
+  if(favorites.includes(id)){
+    favorites = favorites.filter(f=>f!==id);
+  }else{
+    favorites.push(id);
+  }
+  localStorage.setItem("favorites", JSON.stringify(favorites));
+  renderPlaces(places);
+}
+
+function filterByType(type){
+  const filtered = places.filter(p=>p.type?.toLowerCase()===type);
+  renderPlaces(filtered);
+}
+
+function getRatingColor(value){
+  if(value >= 70) return "#22c55e";
+  if(value >= 30) return "#facc15";
+  return "#ef4444";
+}
+
 load();
 </script>
 
