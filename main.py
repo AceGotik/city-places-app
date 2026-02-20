@@ -40,3 +40,8 @@ def create_place(place: PlaceCreate):
     db.commit()
     db.refresh(new_place)
     return new_place
+
+@app.get("/places")
+def get_places():
+    db = SessionLocal()
+    return db.query(Place).all()
