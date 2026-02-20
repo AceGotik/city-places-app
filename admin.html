@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#0b1220;
+    color:white;
+    padding:40px;
+}
+input{
+    width:300px;
+    padding:10px;
+    margin-bottom:10px;
+    display:block;
+}
+button{
+    padding:10px 20px;
+    margin-right:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Админ панель</h1>
+
+<input id="name" placeholder="Название">
+<input id="rating" placeholder="Рейтинг">
+<input id="price" placeholder="Средний чек">
+<input id="street" placeholder="Улица">
+<input id="type" placeholder="Тип">
+<input id="work_time" placeholder="График">
+
+<button onclick="addPlace()">Добавить</button>
+<button onclick="updatePlace()">Обновить</button>
+<button onclick="deletePlace()">Удалить</button>
+
+<input id="editId" placeholder="ID для изменения / удаления">
+
+<script>
+const API = "/places";
+
+function getTelegramId() {
+    const tg = window.Telegram.WebApp;
+    return tg?.initDataUnsafe?.user?.id;
+}
+
+function addPlace(){
+    fetch(API,{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            "X-Telegram-Id": getTelegramId()
+        },
+        body:JSON.stringify({
+            name:name.value,
+            rating:parseInt(rating.value),
+            average_price:parseInt(price.value),
+            street:street.value,
+            type:type.value,
+            work_time:work_time.value
+        })
+    }).then(()=>alert("Добавлено"));
+}
+
+function updatePlace(){
+    fetch(API+"/"+editId.value,{
+        method:"PUT",
+        headers:{
+            "Content-Type":"application/json",
+            "X-Telegram-Id": getTelegramId()
+        },
+        body:JSON.stringify({
+            name:name.value,
+            rating:parseInt(rating.value),
+            average_price:parseInt(price.value),
+            street:street.value,
+            type:type.value,
+            work_time:work_time.value
+        })
+    }).then(()=>alert("Обновлено"));
+}
+
+function deletePlace(){
+    fetch(API+"/"+editId.value,{
+        method:"DELETE",
+        headers:{
+            "X-Telegram-Id": getTelegramId()
+        }
+    }).then(()=>alert("Удалено"));
+}
+</script>
+
+</body>
+</html>
