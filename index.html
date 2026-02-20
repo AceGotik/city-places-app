@@ -243,21 +243,33 @@ fetch(API_URL)
     container.innerHTML = "";
 
     data.forEach(place => {
-        container.innerHTML += `
-        <div class="card">
-            <div class="rating">${place.rating || 0}°</div>
-            <div class="favorite">🤍</div>
-            <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
-            <div class="card-content">
-                <h3>${place.name}</h3>
-                <p>💰 ${place.average_price || "-"} ₽</p>
-                <p>📍 ${place.street || "-"}</p>
-                <p>${place.type || "-"}</p>
-                <p>⏰ ${place.work_time || "-"}</p>
-            </div>
+    container.innerHTML += `
+    <div class="card">
+        <div class="rating">${place.rating || 0}°</div>
+
+        <img src="${place.image || 'https://images.unsplash.com/photo-1550547660-d9450f859349'}">
+
+        <div class="card-content">
+            <h3>${place.name}</h3>
+            <p>💰 ${place.average_price || "-" } ₽</p>
+            <p>📍 ${place.street || "-"}</p>
+            <p>🏷 ${place.type || "-"}</p>
+            <p>⏰ ${place.work_time || "-"}</p>
+
+            <button onclick="vote(${place.id}, 1)">⬆</button>
+            <button onclick="vote(${place.id}, -1)">⬇</button>
         </div>
-        `;
-    });
+    </div>
+    `;
+});
+
+function vote(id, value) {
+    fetch(`/places/${id}/vote?value=` + value, {
+        method: "POST"
+    })
+    .then(() => location.reload());
+}
+    
 });
 </script>
 
