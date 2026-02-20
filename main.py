@@ -4,6 +4,17 @@ from sqlalchemy.orm import Session
 from database import engine, Base, SessionLocal
 from models import Place
 from pydantic import BaseModel
+from fastapi import Header, HTTPException
+
+ADMIN_ID = 315901039  # ← ВСТАВЬ СВОЙ TELEGRAM ID
+
+
+@app.get("/admin")
+def serve_admin(x_telegram_id: int = Header(None)):
+    if x_telegram_id != ADMIN_ID:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return FileResponse("admin.html")
 
 app = FastAPI()
 
