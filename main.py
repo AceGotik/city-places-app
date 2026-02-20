@@ -105,6 +105,9 @@ def delete_place(place_id: int, telegram_id: int = Header(None)):
 
 @app.post("/places/{place_id}/vote")
 def vote(place_id: int, value: int, telegram_id: int = Header(None)):
+    print("TELEGRAM:", telegram_id)
+    print("PLACE:", place_id)
+    print("VALUE:", value)
     db = SessionLocal()
 
     if telegram_id is None:
