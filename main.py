@@ -5,6 +5,8 @@ from database import engine, Base, SessionLocal
 from models import Place, User, Vote, Favorite
 from pydantic import BaseModel
 from typing import Optional
+from models import Vote
+from fastapi import Header
 
 app = FastAPI()
 
@@ -68,9 +70,6 @@ def create_place(place: PlaceSchema):
 
 
 # ---------- VOTING (1 user = 1 vote) ----------
-
-from models import Vote
-from fastapi import Header
 
 @app.post("/places/{place_id}/vote")
 def vote(place_id: int, value: int, telegram_id: int = Header(None)):
