@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional
 from database import engine, Base, SessionLocal
 from models import Place, User, Vote, Favorite
+from fastapi import Request
 
 app = FastAPI()
 
@@ -73,7 +74,7 @@ def create_place(place: PlaceSchema):
 # DELETE PLACE (ADMIN ONLY)
 # =============================
 
-ADMIN_ID = 123456789  # ← ВСТАВЬ СВОЙ TELEGRAM ID
+ADMIN_ID = 315901039  # ← ВСТАВЬ СВОЙ TELEGRAM ID
 
 @app.delete("/admin/places/{place_id}")
 def delete_place(place_id: int, telegram_id: int = Header(None)):
