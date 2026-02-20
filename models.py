@@ -8,3 +8,8 @@ class Place(Base):
     name = Column(String, nullable=False)
     category = Column(String)
     description = Column(Text)
+    rating = Column(Integer, default=0)
+    average_price = Column(Integer)
+    street = Column(String)
+    type = Column(String)
+    work_time = Column(String)
