@@ -8,25 +8,6 @@
 <title>City Places</title>
 
 <style>
-
-<div style="padding:20px;">
-<h2>Добавить / Изменить заведение</h2>
-
-<input id="name" placeholder="Название"><br><br>
-<input id="rating" placeholder="Рейтинг"><br><br>
-<input id="price" placeholder="Средний чек"><br><br>
-<input id="street" placeholder="Улица"><br><br>
-<input id="type" placeholder="Тип (бар, кафе...)"><br><br>
-<input id="work_time" placeholder="График (10:00-00:00)"><br><br>
-
-<button onclick="addPlace()">Добавить</button>
-<button onclick="updatePlace()">Обновить</button>
-<button onclick="deletePlace()">Удалить</button>
-
-<br><br>
-<input id="editId" placeholder="ID для изменения/удаления">
-</div>
-
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -47,24 +28,20 @@ body {
 
 .ads img {
     width: 100%;
-    border-radius: 16px;
     height: 100px;
     object-fit: cover;
+    border-radius: 16px;
 }
 
 .map-block {
     margin: 20px 0;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.12);
     backdrop-filter: blur(20px);
     border-radius: 24px;
     padding: 40px;
     text-align: center;
-    font-size: 32px;
+    font-size: 28px;
     font-weight: bold;
-}
-
-.search {
-    margin: 15px 0;
 }
 
 .search input {
@@ -73,6 +50,7 @@ body {
     border-radius: 16px;
     border: none;
     font-size: 16px;
+    margin: 15px 0;
 }
 
 .categories {
@@ -116,7 +94,7 @@ body {
 }
 
 .card {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.08);
     border-radius: 20px;
     overflow: hidden;
     position: relative;
@@ -190,11 +168,11 @@ body {
     opacity: 1;
     color: #4da3ff;
 }
-    
 </style>
 </head>
 
 <body>
+
 <div class="container">
 
 <div class="ads">
@@ -227,86 +205,35 @@ body {
 </div>
 
 <div class="bottom-nav">
-  <div class="nav-item active" onclick="switchTab('home')">
+  <div class="nav-item active">
     <div>🏠</div>
     <span>Главная</span>
   </div>
 
-  <div class="nav-item" onclick="switchTab('search')">
+  <div class="nav-item">
     <div>🔎</div>
     <span>Поиск</span>
   </div>
 
-  <div class="nav-item" onclick="switchTab('map')">
+  <div class="nav-item">
     <div>🗺</div>
     <span>Карта</span>
   </div>
 
-  <div class="nav-item" onclick="switchTab('fav')">
+  <div class="nav-item">
     <div>❤️</div>
     <span>Избранное</span>
   </div>
 
-  <div class="nav-item" onclick="openAdmin()">
+  <div class="nav-item">
     <div>👤</div>
     <span>Профиль</span>
   </div>
-
-<div id="adminPanel" style="
-display:none;
-position:fixed;
-top:0;
-left:0;
-right:0;
-bottom:0;
-background:#081428;
-padding:20px;
-overflow:auto;
-z-index:9999;
-">
-
-<h2>Админ панель</h2>
-
-<input id="name" placeholder="Название"><br><br>
-<input id="rating" placeholder="Рейтинг"><br><br>
-<input id="price" placeholder="Средний чек"><br><br>
-<input id="street" placeholder="Улица"><br><br>
-<input id="type" placeholder="Тип"><br><br>
-<input id="work_time" placeholder="График"><br><br>
-
-<button onclick="addPlace()">Добавить</button>
-<button onclick="updatePlace()">Обновить</button>
-<button onclick="deletePlace()">Удалить</button>
-
-<br><br>
-<input id="editId" placeholder="ID">
-<br><br>
-<button onclick="closeAdmin()">Закрыть</button>
-
-</div>
-    
 </div>
 
 <script>
+Telegram.WebApp.expand();
 
-const ADMIN_ID = 315901039; // ← сюда вставь свой Telegram ID
-
-function openAdmin() {
-    const tg = window.Telegram.WebApp;
-    const user = tg.initDataUnsafe?.user;
-
-    if (!user) {
-        alert("Не удалось получить Telegram ID");
-        return;
-    }
-
-    if (user.id === ADMIN_ID) {
-        document.getElementById("adminPanel").style.display = "block";
-    } else {
-        alert("У вас нет доступа");
-    }
-}
-    
 const API_URL = "https://city-places-app-production.up.railway.app/places";
 
 fetch(API_URL)
@@ -332,61 +259,6 @@ fetch(API_URL)
         `;
     });
 });
-function addPlace() {
-    fetch(API_URL, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            name: document.getElementById("name").value,
-            rating: parseInt(document.getElementById("rating").value),
-            average_price: parseInt(document.getElementById("price").value),
-            street: document.getElementById("street").value,
-            type: document.getElementById("type").value,
-            work_time: document.getElementById("work_time").value
-        })
-    }).then(() => location.reload());
-}
-
-function openAdmin(){
-    document.getElementById("adminPanel").style.display = "block";
-}
-
-function closeAdmin(){
-    document.getElementById("adminPanel").style.display = "none";
-}
-
-function updatePlace() {
-    const id = document.getElementById("editId").value;
-
-    fetch(API_URL + "/" + id, {
-        method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            name: document.getElementById("name").value,
-            rating: parseInt(document.getElementById("rating").value),
-            average_price: parseInt(document.getElementById("price").value),
-            street: document.getElementById("street").value,
-            type: document.getElementById("type").value,
-            work_time: document.getElementById("work_time").value
-        })
-    }).then(() => location.reload());
-}
-
-function deletePlace() {
-    const id = document.getElementById("editId").value;
-
-    fetch(API_URL + "/" + id, {
-        method: "DELETE"
-    }).then(() => location.reload());
-}
-
-function switchTab(tab) {
-    document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
-    event.currentTarget.classList.add("active");
-
-    console.log("Переключено на:", tab);
-}
-    
 </script>
 
 </body>
