@@ -1,202 +1,225 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <title>City Places</title>
 
 <style>
-body{
-  margin:0;
-  font-family:-apple-system,sans-serif;
-  background:linear-gradient(180deg,#0f172a,#020617);
-  color:white;
-  padding-bottom:120px;
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(180deg,#07142c,#020817);
+    color: white;
 }
-.glass{
-  background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(25px);
-  border-radius:25px;
-  border:1px solid rgba(255,255,255,0.15);
+
+.container {
+    padding: 16px;
+    padding-bottom: 120px;
 }
-.ads{
-  display:flex;
-  gap:12px;
-  padding:16px;
+
+.ads {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
 }
-.ad{
-  flex:0 0 32%;
-  height:110px;
-  border-radius:20px;
-  overflow:hidden;
+
+.ads img {
+    width: 100%;
+    border-radius: 16px;
+    height: 100px;
+    object-fit: cover;
 }
-.ad img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
+
+.map-block {
+    margin: 20px 0;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 40px;
+    text-align: center;
+    font-size: 32px;
+    font-weight: bold;
 }
-.map{
-  margin:0 16px 20px 16px;
-  padding:40px;
-  text-align:center;
-  font-size:40px;
-  font-weight:900;
+
+.search {
+    margin: 15px 0;
 }
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
-  padding:0 16px;
+
+.search input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 16px;
+    border: none;
+    font-size: 16px;
 }
-.card{
-  overflow:hidden;
-  position:relative;
+
+.categories {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
 }
-.card img{
-  width:100%;
-  height:130px;
-  object-fit:cover;
+
+.cat {
+    text-align: center;
 }
-.rating{
-  position:absolute;
-  top:8px;
-  left:8px;
-  background:#111;
-  padding:4px 10px;
-  border-radius:20px;
-  font-size:12px;
+
+.cat div {
+    background: rgba(255,255,255,0.08);
+    width: 70px;
+    height: 70px;
+    border-radius: 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
+    margin-bottom:8px;
 }
-.fav{
-  position:absolute;
-  top:8px;
-  right:8px;
-  font-size:18px;
+
+.filters {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
 }
-.card-info{
-  padding:10px;
+
+.filter-btn {
+    padding: 10px 16px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.08);
 }
-.card-info p{
-  font-size:12px;
-  color:#9ca3af;
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
 }
-.bottom-nav{
-  position:fixed;
-  bottom:20px;
-  left:16px;
-  right:16px;
-  display:flex;
-  justify-content:space-around;
-  padding:16px;
+
+.card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    backdrop-filter: blur(20px);
+}
+
+.card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.rating {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: black;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.favorite {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 18px;
+}
+
+.card-content {
+    padding: 10px;
+}
+
+.card-content h3 {
+    margin: 4px 0;
+    font-size: 16px;
+}
+
+.card-content p {
+    margin: 2px 0;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 20px;
+    left: 10px;
+    right: 10px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    border-radius: 30px;
+    display:flex;
+    justify-content: space-around;
+    padding: 12px;
 }
 </style>
 </head>
+
 <body>
+<div class="container">
 
 <div class="ads">
-  <div class="ad glass"><img src="https://images.unsplash.com/photo-1550547660-d9450f859349"></div>
-  <div class="ad glass"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c"></div>
-  <div class="ad glass"><img src="https://images.unsplash.com/photo-1606755962773-0efc1c7f9f6f"></div>
+<img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+<img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352">
+<img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836">
 </div>
 
-<div class="map glass">MAP</div>
+<div class="map-block">MAP</div>
 
-<div id="adminBlock"></div>
+<div class="search">
+<input type="text" placeholder="Поиск заведения..." id="searchInput">
+</div>
 
-<div class="grid" id="places"></div>
+<div class="categories">
+<div class="cat"><div>🍸</div>Бар</div>
+<div class="cat"><div>☕</div>Кафе</div>
+<div class="cat"><div>🍽️</div>Ресторан</div>
+<div class="cat"><div>🍔</div>Фастфуд</div>
+</div>
 
-<div class="bottom-nav glass">
-  <div>🏠<br>Главная</div>
-  <div>❤️<br>Избранное</div>
+<div class="filters">
+<div class="filter-btn">Все</div>
+<div class="filter-btn">Рядом</div>
+<div class="filter-btn">Популярные</div>
+</div>
+
+<div class="cards" id="placesContainer"></div>
+
+</div>
+
+<div class="bottom-nav">
+<div>🏠</div>
+<div>❤️</div>
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.expand();
+const API_URL = "https://city-places-app-production.up.railway.app/places";
 
-const API_URL = "https://city-places-app-production.up.railway.app";
-const ADMIN_ID = 123456789; // ← ТВОЙ ID
+fetch(API_URL)
+.then(res => res.json())
+.then(data => {
+    const container = document.getElementById("placesContainer");
+    container.innerHTML = "";
 
-const user = tg.initDataUnsafe.user;
-const isAdmin = user && user.id === ADMIN_ID;
-
-if(isAdmin){
-  document.getElementById("adminBlock").innerHTML = `
-    <div style="padding:16px;">
-      <button onclick="openForm()" class="glass" style="padding:12px 20px;width:100%;border:none;color:white;">
-        ➕ Добавить заведение
-      </button>
-    </div>
-  `;
-}
-
-async function load(){
-  const res = await fetch(API_URL + "/places");
-  const data = await res.json();
-  renderPlaces(data);
-}
-
-function renderPlaces(data){
-  const container = document.getElementById("places");
-  container.innerHTML="";
-  data.forEach(p=>{
-    container.innerHTML+=`
-      <div class="card glass">
-        <img src="https://source.unsplash.com/400x300/?restaurant">
-        <div class="rating">${p.rating}</div>
-        <div class="card-info">
-          <h3>${p.name}</h3>
-          <p>${p.average_price}₽</p>
-          <p>${p.street}</p>
-          <p>${p.type}</p>
-          <p>${p.work_time}</p>
+    data.forEach(place => {
+        container.innerHTML += `
+        <div class="card">
+            <div class="rating">${place.rating || 0}°</div>
+            <div class="favorite">🤍</div>
+            <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+            <div class="card-content">
+                <h3>${place.name}</h3>
+                <p>💰 ${place.average_price || "-"} ₽</p>
+                <p>📍 ${place.street || "-"}</p>
+                <p>${place.type || "-"}</p>
+                <p>⏰ ${place.work_time || "-"}</p>
+            </div>
         </div>
-      </div>
-    `;
-  });
-}
-
-function openForm(){
-  document.body.insertAdjacentHTML("beforeend", `
-    <div id="modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:20px;">
-      <div class="glass" style="padding:20px;width:100%;max-width:400px;">
-        <input id="name" placeholder="Название" style="width:100%;margin-bottom:8px;padding:10px;border-radius:10px;border:none;">
-        <input id="type" placeholder="Тип" style="width:100%;margin-bottom:8px;padding:10px;border-radius:10px;border:none;">
-        <input id="price" type="number" placeholder="Средний чек" style="width:100%;margin-bottom:8px;padding:10px;border-radius:10px;border:none;">
-        <input id="street" placeholder="Улица" style="width:100%;margin-bottom:8px;padding:10px;border-radius:10px;border:none;">
-        <input id="work" placeholder="График" style="width:100%;margin-bottom:12px;padding:10px;border-radius:10px;border:none;">
-        <button onclick="submitPlace()" style="width:100%;padding:12px;border:none;border-radius:12px;background:#2563eb;color:white;">
-          Сохранить
-        </button>
-      </div>
-    </div>
-  `);
-}
-
-async function submitPlace(){
-  const data = {
-    name: document.getElementById("name").value,
-    type: document.getElementById("type").value,
-    average_price: parseInt(document.getElementById("price").value),
-    street: document.getElementById("street").value,
-    work_time: document.getElementById("work").value,
-    rating: 0
-  };
-
-  await fetch(API_URL + "/places", {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "telegram-id": user.id
-    },
-    body:JSON.stringify(data)
-  });
-
-  document.getElementById("modal").remove();
-  load();
-}
-
-load();
+        `;
+    });
+});
 </script>
 
 </body>
