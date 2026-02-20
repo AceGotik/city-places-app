@@ -2,7 +2,17 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey
+from database import Base
 
+class Vote(Base):
+    __tablename__ = "votes"
+
+    id = Column(Integer, primary_key=True)
+    telegram_id = Column(Integer, index=True)
+    place_id = Column(Integer, ForeignKey("places.id"))
+    value = Column(Integer)  # 1 или -1
+    
 class User(Base):
     __tablename__ = "users"
 
