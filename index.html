@@ -5,24 +5,170 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <title>City Places</title>
 
 <style>
-body { margin:0; font-family:-apple-system; background:#07142c; color:white;}
-.container{padding:16px;padding-bottom:120px;}
-#map{height:300px;border-radius:20px;margin:20px 0;}
-.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
-.card{background:rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;position:relative;}
-.card img{width:100%;height:120px;object-fit:cover;}
-.rating{position:absolute;top:8px;left:8px;background:black;padding:4px 8px;border-radius:10px;font-size:12px;}
-.favorite{position:absolute;top:8px;right:8px;font-size:20px;cursor:pointer;transition:.2s;}
-.favorite.active{color:red;transform:scale(1.2);}
-.bottom-nav{position:fixed;bottom:20px;left:10px;right:10px;display:flex;justify-content:space-around;background:rgba(255,255,255,0.08);border-radius:30px;padding:12px;}
-.nav-item{cursor:pointer;opacity:.6;}
-.nav-item.active{opacity:1;color:#4da3ff;}
+body{
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+background:linear-gradient(180deg,#07142c,#020817);
+color:white;
+}
+
+.container{
+padding:16px;
+padding-bottom:120px;
+}
+
+.hidden{display:none;}
+
+.ads{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+}
+
+.ads img{
+width:100%;
+height:90px;
+object-fit:cover;
+border-radius:16px;
+}
+
+.search input{
+width:100%;
+padding:14px;
+border-radius:16px;
+border:none;
+margin:15px 0;
+font-size:16px;
+}
+
+.categories{
+display:flex;
+justify-content:space-between;
+margin:15px 0;
+}
+
+.cat{
+text-align:center;
+font-size:12px;
+}
+
+.cat div{
+background:rgba(255,255,255,0.08);
+width:65px;
+height:65px;
+border-radius:18px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:26px;
+margin-bottom:6px;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:14px;
+}
+
+.card{
+background:rgba(255,255,255,0.08);
+border-radius:20px;
+overflow:hidden;
+position:relative;
+backdrop-filter:blur(20px);
+}
+
+.card img{
+width:100%;
+height:120px;
+object-fit:cover;
+}
+
+.rating{
+position:absolute;
+top:8px;
+left:8px;
+background:black;
+padding:4px 8px;
+border-radius:12px;
+font-size:12px;
+}
+
+.favorite{
+position:absolute;
+top:8px;
+right:8px;
+font-size:18px;
+cursor:pointer;
+transition:0.3s;
+}
+
+.favorite.active{
+color:red;
+transform:scale(1.3);
+}
+
+.card-content{
+padding:10px;
+}
+
+.card-content h3{
+margin:4px 0;
+font-size:15px;
+}
+
+.card-content p{
+margin:2px 0;
+font-size:12px;
+opacity:0.8;
+}
+
+button{
+background:#4da3ff;
+border:none;
+padding:6px 10px;
+border-radius:10px;
+margin-top:5px;
+color:white;
+cursor:pointer;
+}
+
+.bottom-nav{
+position:fixed;
+bottom:20px;
+left:10px;
+right:10px;
+display:flex;
+justify-content:space-around;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(25px);
+border-radius:30px;
+padding:12px 8px;
+}
+
+.nav-item{
+text-align:center;
+font-size:12px;
+opacity:0.6;
+cursor:pointer;
+}
+
+.nav-item.active{
+opacity:1;
+color:#4da3ff;
+}
+
+#map{
+height:350px;
+border-radius:20px;
+margin-top:15px;
+}
 </style>
 </head>
 
@@ -30,143 +176,147 @@ body { margin:0; font-family:-apple-system; background:#07142c; color:white;}
 
 <div class="container">
 
-<h2>Карта</h2>
-<div id="map"></div>
+<!-- ГЛАВНАЯ -->
+<div id="homePage">
+
+<div class="ads">
+<img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+<img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352">
+<img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836">
+</div>
+
+<div class="search">
+<input type="text" id="searchInput" placeholder="Поиск заведения...">
+</div>
+
+<div class="categories">
+<div class="cat"><div>🍸</div>Бар</div>
+<div class="cat"><div>☕</div>Кафе</div>
+<div class="cat"><div>🍽️</div>Ресторан</div>
+<div class="cat"><div>🍔</div>Фастфуд</div>
+</div>
 
 <div class="cards" id="placesContainer"></div>
 
 </div>
 
+<!-- КАРТА -->
+<div id="mapPage" class="hidden">
+<h2>Карта</h2>
+<div id="map"></div>
+</div>
+
+<!-- ИЗБРАННОЕ -->
+<div id="favPage" class="hidden">
+<h2>Избранное</h2>
+<div class="cards" id="favoritesContainer"></div>
+</div>
+
+</div>
+
 <div class="bottom-nav">
-<div class="nav-item active" onclick="showAll()">🏠</div>
-<div class="nav-item" onclick="showFavorites()">❤️</div>
+<div class="nav-item active" onclick="showPage('homePage',this)">🏠<br>Главная</div>
+<div class="nav-item" onclick="showPage('mapPage',this)">🗺<br>Карта</div>
+<div class="nav-item" onclick="showPage('favPage',this)">❤️<br>Избранное</div>
 </div>
 
 <script>
-
 Telegram.WebApp.expand();
 
 const API_BASE="https://city-places-app-production.up.railway.app";
-const telegramId=Telegram.WebApp.initDataUnsafe.user.id;
+const telegramId=Telegram.WebApp.initDataUnsafe?.user?.id || 0;
 
-let allPlaces=[];
-let favorites=[];
-let currentView="all";
-let map;
-let markers=[];
-
-function initMap(){
-    map=L.map('map').setView([55.7558,37.6173],12);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-        attribution:'© OpenStreetMap'
-    }).addTo(map);
-}
-
-function updateMarkers(){
-    markers.forEach(m=>map.removeLayer(m));
-    markers=[];
-
-    let filtered=allPlaces;
-    if(currentView==="favorites"){
-        filtered=allPlaces.filter(p=>favorites.includes(p.id));
-    }
-
-    filtered.forEach(place=>{
-        if(place.latitude && place.longitude){
-            const marker=L.marker([place.latitude,place.longitude])
-            .addTo(map)
-            .bindPopup(`<b>${place.name}</b>`);
-            markers.push(marker);
-        }
-    });
-}
-
-function loadFavorites(){
-    return fetch(`${API_BASE}/favorites`,{
-        headers:{"telegram-id":telegramId}
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        favorites=data.map(p=>p.id);
-    });
+function showPage(id,el){
+document.querySelectorAll(".container > div").forEach(p=>p.classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
+document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+el.classList.add("active");
+if(id==="mapPage"){setTimeout(initMap,200);}
+if(id==="favPage"){loadFavorites();}
 }
 
 function loadPlaces(){
-    fetch(`${API_BASE}/places`)
-    .then(res=>res.json())
-    .then(data=>{
-        allPlaces=data;
-        render();
-        updateMarkers();
-    });
-}
-
-function render(){
-    const container=document.getElementById("placesContainer");
-    container.innerHTML="";
-
-    let filtered=allPlaces;
-    if(currentView==="favorites"){
-        filtered=allPlaces.filter(p=>favorites.includes(p.id));
-    }
-
-    filtered.forEach(place=>{
-        const isFav=favorites.includes(place.id);
-
-        container.innerHTML+=`
-        <div class="card">
-            <div class="rating">${place.rating||0}°</div>
-            <div class="favorite ${isFav?'active':''}"
-                onclick="toggleFavorite(${place.id},this)">❤️</div>
-            <img src="${place.image||'https://images.unsplash.com/photo-1550547660-d9450f859349'}">
-            <div style="padding:10px">
-                <b>${place.name}</b>
-                <p>💰 ${place.average_price||"-"} ₽</p>
-                <button onclick="vote(${place.id},1)">⬆</button>
-                <button onclick="vote(${place.id},-1)">⬇</button>
-            </div>
-        </div>
-        `;
-    });
+fetch(API_BASE+"/places")
+.then(r=>r.json())
+.then(data=>{
+const container=document.getElementById("placesContainer");
+container.innerHTML="";
+data.forEach(place=>{
+container.innerHTML+=`
+<div class="card">
+<div class="rating">${place.rating||0}°</div>
+<div class="favorite" onclick="toggleFav(${place.id},this)">❤️</div>
+<img src="${place.image||'https://images.unsplash.com/photo-1550547660-d9450f859349'}">
+<div class="card-content">
+<h3>${place.name}</h3>
+<p>💰 ${place.average_price||"-"} ₽</p>
+<p>📍 ${place.street||"-"}</p>
+<p>🏷 ${place.type||"-"}</p>
+<p>⏰ ${place.work_time||"-"}</p>
+<button onclick="vote(${place.id},1)">⬆</button>
+<button onclick="vote(${place.id},-1)">⬇</button>
+</div>
+</div>`;
+});
+});
 }
 
 function vote(id,value){
-    fetch(`${API_BASE}/places/${id}/vote?value=`+value,{
-        method:"POST",
-        headers:{"telegram-id":telegramId}
-    }).then(()=>loadPlaces());
+fetch(API_BASE+`/places/${id}/vote?value=`+value,{
+method:"POST",
+headers:{"telegram-id":telegramId}
+}).then(()=>loadPlaces());
 }
 
-function toggleFavorite(id,el){
-    const isFav=favorites.includes(id);
-    const method=isFav?"DELETE":"POST";
-
-    fetch(`${API_BASE}/places/${id}/favorite`,{
-        method:method,
-        headers:{"telegram-id":telegramId}
-    })
-    .then(()=>loadFavorites().then(()=>{
-        render();
-        updateMarkers();
-    }));
+function toggleFav(id,el){
+fetch(API_BASE+`/places/${id}/favorite`,{
+method:"POST",
+headers:{"telegram-id":telegramId}
+}).then(()=>{
+el.classList.toggle("active");
+});
 }
 
-function showFavorites(){
-    currentView="favorites";
-    render();
-    updateMarkers();
+function loadFavorites(){
+fetch(API_BASE+`/favorites?telegram_id=`+telegramId)
+.then(r=>r.json())
+.then(data=>{
+const container=document.getElementById("favoritesContainer");
+container.innerHTML="";
+data.forEach(place=>{
+container.innerHTML+=`
+<div class="card">
+<img src="${place.image||''}">
+<div class="card-content">
+<h3>${place.name}</h3>
+<p>${place.street}</p>
+</div>
+</div>`;
+});
+});
 }
 
-function showAll(){
-    currentView="all";
-    render();
-    updateMarkers();
+let mapInitialized=false;
+function initMap(){
+if(mapInitialized) return;
+mapInitialized=true;
+const map=L.map('map').setView([55.75,37.61],12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap'
+}).addTo(map);
+fetch(API_BASE+"/places")
+.then(r=>r.json())
+.then(data=>{
+data.forEach(p=>{
+if(p.lat && p.lng){
+L.marker([p.lat,p.lng]).addTo(map)
+.bindPopup(p.name);
+}
+});
+});
 }
 
-initMap();
-loadFavorites().then(loadPlaces);
-
+loadPlaces();
 </script>
 
 </body>
