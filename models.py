@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
-
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
 
 class User(Base):
     __tablename__ = "users"
@@ -21,6 +21,9 @@ class Place(Base):
     work_time = Column(String)
     rating = Column(Integer, default=0)
     image = Column(String)
+    # 👇 ВСТАВИТЬ ВОТ ЭТИ ДВЕ СТРОКИ
+    latitude = Column(Float)
+    longitude = Column(Float)
 
 
 class Vote(Base):
