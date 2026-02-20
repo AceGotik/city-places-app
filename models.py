@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String
 from database import Base
 
 class Place(Base):
-    __tablename__ = "places_new"
+    __tablename__ = "places_full"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
@@ -11,3 +11,4 @@ class Place(Base):
     type = Column(String)
     work_time = Column(String)
     rating = Column(Integer, default=0)
+    image = Column(String)
