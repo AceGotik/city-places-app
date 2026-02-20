@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Optional
 from models import Vote
 from fastapi import Header
+from sqlalchemy import func
 
 app = FastAPI()
 
@@ -75,33 +76,36 @@ def create_place(place: PlaceSchema):
 def vote(place_id: int, value: int, telegram_id: int = Header(None)):
     db = SessionLocal()
 
-    # ищем существующий голос
-    existing = db.query(Vote).filter(
+    if telegram_id is None:
+        return {"error": "No telegram_id"}
+
+    # ищем голос
+    vote = db.query(Vote).filter(
         Vote.place_id == place_id,
         Vote.telegram_id == telegram_id
     ).first()
 
-    if existing:
-        if existing.value == value:
-            # если нажал ту же кнопку → удалить голос
-            db.delete(existing)
+    if vote:
+        if vote.value == value:
+            # повторное нажатие — удалить
+            db.delete(vote)
         else:
-            # если сменил решение → обновить значение
-            existing.value = value
+            # смена решения
+            vote.value = value
     else:
-        # если не голосовал → создаём
         new_vote = Vote(
-            telegram_id=telegram_id,
             place_id=place_id,
+            telegram_id=telegram_id,
             value=value
         )
         db.add(new_vote)
 
     db.commit()
 
-    # пересчитываем рейтинг
-    votes = db.query(Vote).filter(Vote.place_id == place_id).all()
-    total = sum(v.value for v in votes)
+    # пересчитываем рейтинг через SUM
+    total = db.query(func.coalesce(func.sum(Vote.value), 0))\
+        .filter(Vote.place_id == place_id)\
+        .scalar()
 
     place = db.query(Place).filter(Place.id == place_id).first()
     place.rating = total
