@@ -16,7 +16,8 @@ with engine.connect() as conn:
         ALTER TABLE votes 
         ADD COLUMN IF NOT EXISTS telegram_id BIGINT;
     """))
-    conn.commit(
+    conn.commit()
+        
 # создаём таблицы
 Base.metadata.create_all(bind=engine)
 
