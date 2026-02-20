@@ -7,6 +7,14 @@ from typing import Optional
 from database import engine, Base, SessionLocal
 from models import Place, User, Vote, Favorite
 from fastapi import Request
+from sqlalchemy import text
+
+with engine.connect() as conn:
+    conn.execute(text("""
+        ALTER TABLE votes 
+        ADD COLUMN IF NOT EXISTS telegram_id BIGINT;
+    """))
+    conn.commit(
 
 app = FastAPI()
 
