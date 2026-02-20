@@ -2,8 +2,6 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
-from sqlalchemy import Column, Integer, ForeignKey
-from database import Base
 
 class Vote(Base):
     __tablename__ = "votes"
