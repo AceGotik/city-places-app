@@ -1,14 +1,16 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from fastapi.responses import FileResponse
-from database import engine, Base, SessionLocal
-from models import Place
 from sqlalchemy.orm import Session
+from database import engine, Base, SessionLocal
+from models import Place, User, Vote, Favorite
 from pydantic import BaseModel
 from typing import Optional
 
 app = FastAPI()
 
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
+
 
 # ---------- FRONT ----------
 
@@ -34,7 +36,19 @@ class PlaceSchema(BaseModel):
     image: Optional[str] = None
 
 
-# ---------- API ----------
+# ---------- USER HELPER ----------
+
+def get_or_create_user(db: Session, telegram_id: int):
+    user = db.query(User).filter(User.telegram_id == telegram_id).first()
+    if not user:
+        user = User(telegram_id=telegram_id)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    return user
+
+
+# ---------- PLACES ----------
 
 @app.get("/places")
 def get_places():
@@ -52,41 +66,63 @@ def create_place(place: PlaceSchema):
     return new_place
 
 
-@app.put("/places/{place_id}")
-def update_place(place_id: int, place: PlaceSchema):
-    db = SessionLocal()
-    db_place = db.query(Place).filter(Place.id == place_id).first()
-
-    if db_place:
-        for key, value in place.dict().items():
-            setattr(db_place, key, value)
-
-        db.commit()
-        db.refresh(db_place)
-
-    return db_place
-
-
-@app.delete("/places/{place_id}")
-def delete_place(place_id: int):
-    db = SessionLocal()
-    db_place = db.query(Place).filter(Place.id == place_id).first()
-
-    if db_place:
-        db.delete(db_place)
-        db.commit()
-
-    return {"message": "deleted"}
-
+# ---------- VOTING (1 user = 1 vote) ----------
 
 @app.post("/places/{place_id}/vote")
-def vote(place_id: int, value: int):
+def vote(place_id: int, value: int, telegram_id: int = Header()):
     db = SessionLocal()
+    user = get_or_create_user(db, telegram_id)
+
+    existing_vote = db.query(Vote).filter(
+        Vote.user_id == user.id,
+        Vote.place_id == place_id
+    ).first()
+
     place = db.query(Place).filter(Place.id == place_id).first()
 
-    if place:
-        place.rating += value
-        db.commit()
-        db.refresh(place)
+    if not place:
+        return {"error": "Place not found"}
 
-    return place
+    if existing_vote:
+        return {"message": "Already voted"}
+
+    vote = Vote(user_id=user.id, place_id=place_id, value=value)
+    db.add(vote)
+
+    place.rating += value
+
+    db.commit()
+    return {"message": "Voted"}
+
+
+# ---------- FAVORITES ----------
+
+@app.post("/places/{place_id}/favorite")
+def add_favorite(place_id: int, telegram_id: int = Header()):
+    db = SessionLocal()
+    user = get_or_create_user(db, telegram_id)
+
+    existing = db.query(Favorite).filter(
+        Favorite.user_id == user.id,
+        Favorite.place_id == place_id
+    ).first()
+
+    if existing:
+        return {"message": "Already in favorites"}
+
+    fav = Favorite(user_id=user.id, place_id=place_id)
+    db.add(fav)
+    db.commit()
+
+    return {"message": "Added to favorites"}
+
+
+@app.get("/favorites")
+def get_favorites(telegram_id: int = Header()):
+    db = SessionLocal()
+    user = get_or_create_user(db, telegram_id)
+
+    favs = db.query(Favorite).filter(Favorite.user_id == user.id).all()
+    place_ids = [f.place_id for f in favs]
+
+    return db.query(Place).filter(Place.id.in_(place_ids)).all()
