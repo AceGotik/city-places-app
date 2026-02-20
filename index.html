@@ -258,6 +258,7 @@ fetch(API_URL)
 
             <button onclick="vote(${place.id}, 1)">⬆</button>
             <button onclick="vote(${place.id}, -1)">⬇</button>
+            <button onclick="addFavorite(${place.id})">❤️</button>
         </div>
     </div>
     `;
@@ -268,6 +269,26 @@ function vote(id, value) {
         method: "POST"
     })
     .then(() => location.reload());
+}
+
+const telegramId = Telegram.WebApp.initDataUnsafe.user.id;
+
+function vote(id, value) {
+    fetch(`/places/${id}/vote?value=` + value, {
+        method: "POST",
+        headers: {
+            "telegram-id": telegramId
+        }
+    }).then(() => location.reload());
+}
+
+function addFavorite(id) {
+    fetch(`/places/${id}/favorite`, {
+        method: "POST",
+        headers: {
+            "telegram-id": telegramId
+        }
+    }).then(() => alert("Добавлено в избранное"));
 }
     
 });
