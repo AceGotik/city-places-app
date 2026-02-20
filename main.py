@@ -10,17 +10,6 @@ app = FastAPI()
 
 from sqlalchemy import text
 
-with engine.connect() as conn:
-    conn.execute(text("""
-        ALTER TABLE places 
-        ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
-    """))
-    conn.execute(text("""
-        ALTER TABLE places 
-        ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
-    """))
-    conn.commit()
-
 Base.metadata.create_all(bind=engine)
 
 
