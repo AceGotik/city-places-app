@@ -125,3 +125,19 @@ def get_favorites(telegram_id: int = Header()):
     place_ids = [f.place_id for f in favs]
 
     return db.query(Place).filter(Place.id.in_(place_ids)).all()
+
+@app.delete("/places/{place_id}/favorite")
+def remove_favorite(place_id: int, telegram_id: int = Header()):
+    db = SessionLocal()
+    user = get_or_create_user(db, telegram_id)
+
+    fav = db.query(Favorite).filter(
+        Favorite.user_id == user.id,
+        Favorite.place_id == place_id
+    ).first()
+
+    if fav:
+        db.delete(fav)
+        db.commit()
+
+    return {"message": "Removed"}
