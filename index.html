@@ -1,132 +1,146 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>City Places</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<title>City Places</title>
 
 <style>
-:root {
-  --tg-bg: #0f0f0f;
-  --tg-card: #1c1c1e;
-  --tg-accent: #2ea6ff;
-  --tg-secondary: #8e8e93;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro", sans-serif;
-  background: var(--tg-bg);
+  background: linear-gradient(180deg, #0f172a, #020617);
+  color: white;
+  padding: 16px;
+  padding-bottom: 100px;
+}
+
+/* === Glass Effect === */
+.glass {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* === Header === */
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* === Filters === */
+.filters {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.chip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  background: rgba(255,255,255,0.1);
   color: white;
 }
 
-.header {
-  padding: 20px 16px 10px;
-  font-size: 24px;
-  font-weight: 700;
+.chip.active {
+  background: #2563eb;
 }
 
-.container {
-  padding: 0 12px 100px;
+/* === Cards === */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
 }
 
 .card {
-  background: var(--tg-card);
-  border-radius: 20px;
-  padding: 16px;
-  margin-bottom: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  transition: transform 0.15s ease;
+  overflow: hidden;
 }
 
-.card:active {
-  transform: scale(0.98);
-}
-
-.card h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.category {
-  margin-top: 4px;
-  font-size: 13px;
-  color: var(--tg-secondary);
-}
-
-.description {
-  margin-top: 10px;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.button {
-  margin-top: 14px;
+.card img {
   width: 100%;
-  background: var(--tg-accent);
+  height: 120px;
+  object-fit: cover;
+}
+
+.card-content {
+  padding: 10px;
+}
+
+/* === Bottom Nav === */
+.bottom-nav {
+  position: fixed;
+  bottom: 20px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-around;
+  padding: 14px;
+}
+
+.nav-btn {
+  background: none;
   border: none;
-  border-radius: 14px;
-  padding: 12px;
-  font-size: 15px;
-  font-weight: 600;
   color: white;
-}
-
-.button:active {
-  opacity: 0.8;
-}
-
-@media (min-width: 600px) {
-  .container {
-    max-width: 500px;
-    margin: auto;
-  }
+  font-size: 20px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">📍 City Places</div>
-<div class="container" id="places"></div>
+<h1>Главное меню</h1>
+
+<div class="filters">
+  <button class="chip active">Все</button>
+  <button class="chip">Рядом</button>
+  <button class="chip">Популярные</button>
+  <button class="chip">Новые</button>
+</div>
+
+<div class="grid">
+
+  <div class="card glass">
+    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+    <div class="card-content">
+      <h3>Бургер Хаус</h3>
+      <p>Средний чек 490₽</p>
+    </div>
+  </div>
+
+  <div class="card glass">
+    <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c">
+    <div class="card-content">
+      <h3>Суши Лэнд</h3>
+      <p>Средний чек 650₽</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottom-nav glass">
+  <button class="nav-btn">🏠</button>
+  <button class="nav-btn">🔍</button>
+  <button class="nav-btn">🗺</button>
+  <button class="nav-btn">❤️</button>
+  <button class="nav-btn">👤</button>
+</div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-const API_URL = "https://city-places-app-production.up.railway.app/places";
-
-fetch(API_URL)
-  .then(res => res.json())
-  .then(data => {
-    const container = document.getElementById("places");
-
-    if (data.length === 0) {
-      container.innerHTML = "Пока нет заведений";
-      return;
-    }
-
-    data.forEach((place, index) => {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.style.animationDelay = (index * 0.1) + "s";
-
-      card.innerHTML = `
-        <h2>${place.name}</h2>
-        <div class="category">${place.category}</div>
-        <div class="description">${place.description}</div>
-        <button class="button">Был здесь</button>
-      `;
-
-      container.appendChild(card);
-    });
-  })
-  .catch(() => {
-    document.getElementById("places").innerHTML = "Ошибка загрузки";
-  });
+  const tg = window.Telegram.WebApp;
+  tg.expand();
 </script>
 
 </body>
