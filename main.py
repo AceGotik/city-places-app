@@ -10,7 +10,7 @@ app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 # 🔐 ТВОЙ Telegram ID
-ADMIN_ID = 123456789  # ← ВСТАВЬ СЮДА СВОЙ TELEGRAM ID
+ADMIN_ID = 315901039  # ← ВСТАВЬ СЮДА СВОЙ TELEGRAM ID
 
 
 @app.get("/")
