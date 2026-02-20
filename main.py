@@ -4,13 +4,14 @@ from database import engine, Base, SessionLocal
 from models import Place
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from typing import Optional
 
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
 
 
-# ---------- FRONTEND ----------
+# ---------- FRONT ----------
 
 @app.get("/")
 def serve_frontend():
@@ -22,6 +23,18 @@ def serve_admin():
     return FileResponse("admin.html")
 
 
+# ---------- SCHEMA ----------
+
+class PlaceSchema(BaseModel):
+    name: str
+    average_price: Optional[int] = None
+    street: Optional[str] = None
+    type: Optional[str] = None
+    work_time: Optional[str] = None
+    rating: Optional[int] = 0
+    image: Optional[str] = None
+
+
 # ---------- API ----------
 
 @app.get("/places")
@@ -30,17 +43,8 @@ def get_places():
     return db.query(Place).all()
 
 
-class PlaceCreate(BaseModel):
-    name: str
-    average_price: int
-    street: str
-    type: str
-    work_time: str
-    rating: int
-
-
 @app.post("/places")
-def create_place(place: PlaceCreate):
+def create_place(place: PlaceSchema):
     db = SessionLocal()
     new_place = Place(**place.dict())
     db.add(new_place)
@@ -49,25 +53,40 @@ def create_place(place: PlaceCreate):
     return new_place
 
 
+@app.put("/places/{place_id}")
+def update_place(place_id: int, place: PlaceSchema):
+    db = SessionLocal()
+    db_place = db.query(Place).filter(Place.id == place_id).first()
+
+    if db_place:
+        for key, value in place.dict().items():
+            setattr(db_place, key, value)
+
+        db.commit()
+        db.refresh(db_place)
+
+    return db_place
+
+
 @app.delete("/places/{place_id}")
 def delete_place(place_id: int):
     db = SessionLocal()
-    place = db.query(Place).filter(Place.id == place_id).first()
-    if place:
-        db.delete(place)
+    db_place = db.query(Place).filter(Place.id == place_id).first()
+
+    if db_place:
+        db.delete(db_place)
         db.commit()
+
     return {"message": "deleted"}
 
 
-@app.put("/places/{place_id}")
-def update_place(place_id: int, place_data: PlaceCreate):
+@app.post("/places/{place_id}/vote")
+def vote(place_id: int, value: int):
     db = SessionLocal()
     place = db.query(Place).filter(Place.id == place_id).first()
 
     if place:
-        for key, value in place_data.dict().items():
-            setattr(place, key, value)
-
+        place.rating += value
         db.commit()
         db.refresh(place)
 
