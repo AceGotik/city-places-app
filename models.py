@@ -33,16 +33,6 @@ class Place(Base):
     latitude = Column(Float)
     longitude = Column(Float)
 
-
-class Vote(Base):
-    __tablename__ = "votes"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    place_id = Column(Integer, ForeignKey("places.id"))
-    value = Column(Integer)
-
-
 class Favorite(Base):
     __tablename__ = "favorites"
 
