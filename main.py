@@ -6,16 +6,6 @@ from models import Place
 from pydantic import BaseModel
 from fastapi import Header, HTTPException
 
-ADMIN_ID = 315901039  # ← ВСТАВЬ СВОЙ TELEGRAM ID
-
-
-@app.get("/admin")
-def serve_admin(x_telegram_id: int = Header(None)):
-    if x_telegram_id != ADMIN_ID:
-        raise HTTPException(status_code=403, detail="Access denied")
-
-    return FileResponse("admin.html")
-
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
@@ -83,3 +73,13 @@ def delete_place(place_id: int):
     db.delete(db_place)
     db.commit()
     return {"message": "Deleted"}
+
+ADMIN_ID = 315901039  # ← ВСТАВЬ СВОЙ TELEGRAM ID
+
+
+@app.get("/admin")
+def serve_admin(x_telegram_id: int = Header(None)):
+    if x_telegram_id != ADMIN_ID:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return FileResponse("admin.html")
