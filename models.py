@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String
 from database import Base
 
 class Place(Base):
-    __tablename__ = "places"
+    __tablename__ = "places_new"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
