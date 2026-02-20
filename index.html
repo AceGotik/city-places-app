@@ -8,6 +8,25 @@
 <title>City Places</title>
 
 <style>
+
+<div style="padding:20px;">
+<h2>Добавить / Изменить заведение</h2>
+
+<input id="name" placeholder="Название"><br><br>
+<input id="rating" placeholder="Рейтинг"><br><br>
+<input id="price" placeholder="Средний чек"><br><br>
+<input id="street" placeholder="Улица"><br><br>
+<input id="type" placeholder="Тип (бар, кафе...)"><br><br>
+<input id="work_time" placeholder="График (10:00-00:00)"><br><br>
+
+<button onclick="addPlace()">Добавить</button>
+<button onclick="updatePlace()">Обновить</button>
+<button onclick="deletePlace()">Удалить</button>
+
+<br><br>
+<input id="editId" placeholder="ID для изменения/удаления">
+</div>
+
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -220,6 +239,46 @@ fetch(API_URL)
         `;
     });
 });
+function addPlace() {
+    fetch(API_URL, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            name: document.getElementById("name").value,
+            rating: parseInt(document.getElementById("rating").value),
+            average_price: parseInt(document.getElementById("price").value),
+            street: document.getElementById("street").value,
+            type: document.getElementById("type").value,
+            work_time: document.getElementById("work_time").value
+        })
+    }).then(() => location.reload());
+}
+
+function updatePlace() {
+    const id = document.getElementById("editId").value;
+
+    fetch(API_URL + "/" + id, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            name: document.getElementById("name").value,
+            rating: parseInt(document.getElementById("rating").value),
+            average_price: parseInt(document.getElementById("price").value),
+            street: document.getElementById("street").value,
+            type: document.getElementById("type").value,
+            work_time: document.getElementById("work_time").value
+        })
+    }).then(() => location.reload());
+}
+
+function deletePlace() {
+    const id = document.getElementById("editId").value;
+
+    fetch(API_URL + "/" + id, {
+        method: "DELETE"
+    }).then(() => location.reload());
+}
+    
 </script>
 
 </body>
