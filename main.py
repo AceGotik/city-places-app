@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException
 from database import engine, Base, SessionLocal
 from models import Place
 from sqlalchemy.orm import Session
@@ -8,6 +8,9 @@ from pydantic import BaseModel
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
+
+# 🔐 ТВОЙ Telegram ID
+ADMIN_ID = 123456789  # ← ВСТАВЬ СЮДА СВОЙ TELEGRAM ID
 
 
 @app.get("/")
@@ -31,7 +34,10 @@ class PlaceCreate(BaseModel):
 
 
 @app.post("/places")
-def create_place(place: PlaceCreate):
+def create_place(place: PlaceCreate, telegram_id: int = Header(None)):
+    if telegram_id != ADMIN_ID:
+        raise HTTPException(status_code=403, detail="Not allowed")
+
     db = SessionLocal()
 
     new_place = Place(
@@ -46,4 +52,5 @@ def create_place(place: PlaceCreate):
     db.add(new_place)
     db.commit()
     db.refresh(new_place)
+
     return new_place
