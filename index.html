@@ -1,1 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>City Places</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
 
+    .card {
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      margin: 0 0 5px 0;
+    }
+
+    .category {
+      color: #aaa;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📍 Заведения города</h1>
+
+<div id="places"></div>
+
+<script>
+  const API_URL = "https://city-places-app-production.up.railway.ap";
+
+  fetch(API_URL)
+    .then(response => response.json())
+    .then(data => {
+      const container = document.getElementById("places");
+
+      if (data.length === 0) {
+        container.innerHTML = "Пока нет заведений";
+        return;
+      }
+
+      data.forEach(place => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h2>${place.name}</h2>
+          <div class="category">${place.category}</div>
+          <p>${place.description}</p>
+        `;
+        container.appendChild(div);
+      });
+    })
+    .catch(error => {
+      document.getElementById("places").innerHTML = "Ошибка загрузки данных";
+      console.error(error);
+    });
+</script>
+
+</body>
+</html>
