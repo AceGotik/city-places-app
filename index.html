@@ -8,101 +8,208 @@
 <title>City Places</title>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
 }
 
-body {
-  background: linear-gradient(180deg, #0f172a, #020617);
-  color: white;
-  padding: 16px;
-  padding-bottom: 100px;
+body{
+  background:#0b0f1a;
+  color:white;
+  padding-bottom:100px;
 }
 
-/* === Glass Effect === */
-.glass {
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+/* ==== ADS ==== */
+.ads{
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  padding:16px;
 }
 
-/* === Header === */
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
+.ad-card{
+  min-width:160px;
+  height:90px;
+  border-radius:20px;
+  overflow:hidden;
+  position:relative;
 }
 
-/* === Filters === */
-.filters {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  margin-bottom: 20px;
+.ad-card img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
 
-.chip {
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: none;
-  background: rgba(255,255,255,0.1);
-  color: white;
+.ad-card span{
+  position:absolute;
+  bottom:8px;
+  left:10px;
+  font-size:12px;
+  font-weight:bold;
 }
 
-.chip.active {
-  background: #2563eb;
+/* ==== MAP TITLE ==== */
+.map-title{
+  background:white;
+  color:black;
+  text-align:center;
+  font-size:60px;
+  font-weight:900;
+  padding:20px 0;
 }
 
-/* === Cards === */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
+/* ==== CATEGORY BAR ==== */
+.categories{
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  padding:10px 16px;
+  background:#111827;
 }
 
-.card {
-  overflow: hidden;
+.cat{
+  text-align:center;
+  font-size:12px;
 }
 
-.card img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
+.cat img{
+  width:50px;
+  height:50px;
+  border-radius:10px;
 }
 
-.card-content {
-  padding: 10px;
+/* ==== FILTERS ==== */
+.filters{
+  display:flex;
+  gap:10px;
+  padding:16px;
 }
 
-/* === Bottom Nav === */
-.bottom-nav {
-  position: fixed;
-  bottom: 20px;
-  left: 16px;
-  right: 16px;
-  display: flex;
-  justify-content: space-around;
-  padding: 14px;
+.chip{
+  padding:8px 18px;
+  border-radius:20px;
+  border:none;
+  background:#1f2937;
+  color:white;
 }
 
-.nav-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 20px;
+.chip.active{
+  background:#2563eb;
+}
+
+/* ==== GRID ==== */
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  padding:0 16px;
+}
+
+.card{
+  background:#111827;
+  border-radius:20px;
+  overflow:hidden;
+  position:relative;
+}
+
+.card img{
+  width:100%;
+  height:120px;
+  object-fit:cover;
+}
+
+.price-badge{
+  position:absolute;
+  top:8px;
+  left:8px;
+  background:rgba(0,0,0,0.7);
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:12px;
+}
+
+.star{
+  position:absolute;
+  top:8px;
+  right:8px;
+  font-size:18px;
+}
+
+.card-content{
+  padding:10px;
+}
+
+.card-content h3{
+  font-size:16px;
+}
+
+.card-content p{
+  font-size:12px;
+  color:#9ca3af;
+}
+
+/* ==== BOTTOM NAV ==== */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:#0f172a;
+  display:flex;
+  justify-content:space-around;
+  padding:14px 0;
+  border-top:1px solid #1f2937;
+}
+
+.bottom-nav div{
+  text-align:center;
+  font-size:12px;
+}
+
+.bottom-nav span{
+  display:block;
+  font-size:20px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Главное меню</h1>
+<!-- ADS -->
+<div class="ads">
+  <div class="ad-card">
+    <img src="https://images.unsplash.com/photo-1600891964599-f61ba0e24092">
+    <span>-40% на пиццу</span>
+  </div>
+  <div class="ad-card">
+    <img src="https://images.unsplash.com/photo-1548365328-8b849e1f0ef9">
+    <span>Вторая бесплатно</span>
+  </div>
+</div>
 
+<!-- MAP -->
+<div class="map-title">MAP</div>
+
+<!-- CATEGORIES -->
+<div class="categories">
+  <div class="cat">
+    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+    Бургеры
+  </div>
+  <div class="cat">
+    <img src="https://images.unsplash.com/photo-1594007654729-407eedc4be65">
+    Пицца
+  </div>
+  <div class="cat">
+    <img src="https://images.unsplash.com/photo-1606755962773-0efc1c7f9f6f">
+    Суши
+  </div>
+</div>
+
+<!-- FILTERS -->
 <div class="filters">
   <button class="chip active">Все</button>
   <button class="chip">Рядом</button>
@@ -110,37 +217,43 @@ h1 {
   <button class="chip">Новые</button>
 </div>
 
+<!-- GRID -->
 <div class="grid">
 
-  <div class="card glass">
+  <div class="card">
     <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+    <div class="price-badge">490₽</div>
+    <div class="star">⭐</div>
     <div class="card-content">
       <h3>Бургер Хаус</h3>
-      <p>Средний чек 490₽</p>
+      <p>Средний чек · Улица</p>
     </div>
   </div>
 
-  <div class="card glass">
+  <div class="card">
     <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c">
+    <div class="price-badge">490₽</div>
+    <div class="star">⭐</div>
     <div class="card-content">
       <h3>Суши Лэнд</h3>
-      <p>Средний чек 650₽</p>
+      <p>Средний чек · Центр</p>
     </div>
   </div>
 
 </div>
 
-<div class="bottom-nav glass">
-  <button class="nav-btn">🏠</button>
-  <button class="nav-btn">🔍</button>
-  <button class="nav-btn">🗺</button>
-  <button class="nav-btn">❤️</button>
-  <button class="nav-btn">👤</button>
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div><span>🏠</span>Главная</div>
+  <div><span>🔍</span>Поиск</div>
+  <div><span>🗺</span>Карта</div>
+  <div><span>❤️</span>Избранное</div>
+  <div><span>👤</span>Профиль</div>
 </div>
 
 <script>
-  const tg = window.Telegram.WebApp;
-  tg.expand();
+const tg = window.Telegram.WebApp;
+tg.expand();
 </script>
 
 </body>
