@@ -166,13 +166,31 @@ body {
     bottom: 20px;
     left: 10px;
     right: 10px;
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(20px);
-    border-radius: 30px;
-    display:flex;
+    display: flex;
     justify-content: space-around;
-    padding: 12px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(25px);
+    border-radius: 30px;
+    padding: 12px 8px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
 }
+
+.nav-item {
+    text-align: center;
+    font-size: 12px;
+    opacity: 0.6;
+    transition: 0.3s;
+}
+
+.nav-item div {
+    font-size: 20px;
+}
+
+.nav-item.active {
+    opacity: 1;
+    color: #4da3ff;
+}
+    
 </style>
 </head>
 
@@ -209,8 +227,30 @@ body {
 </div>
 
 <div class="bottom-nav">
-<div>🏠</div>
-<div>❤️</div>
+  <div class="nav-item active" onclick="switchTab('home')">
+    <div>🏠</div>
+    <span>Главная</span>
+  </div>
+
+  <div class="nav-item" onclick="switchTab('search')">
+    <div>🔎</div>
+    <span>Поиск</span>
+  </div>
+
+  <div class="nav-item" onclick="switchTab('map')">
+    <div>🗺</div>
+    <span>Карта</span>
+  </div>
+
+  <div class="nav-item" onclick="switchTab('fav')">
+    <div>❤️</div>
+    <span>Избранное</span>
+  </div>
+
+  <div class="nav-item" onclick="switchTab('profile')">
+    <div>👤</div>
+    <span>Профиль</span>
+  </div>
 </div>
 
 <script>
@@ -277,6 +317,13 @@ function deletePlace() {
     fetch(API_URL + "/" + id, {
         method: "DELETE"
     }).then(() => location.reload());
+}
+
+function switchTab(tab) {
+    document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+    event.currentTarget.classList.add("active");
+
+    console.log("Переключено на:", tab);
 }
     
 </script>
