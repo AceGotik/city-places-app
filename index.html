@@ -262,14 +262,16 @@ container.innerHTML+=`
 }
 
 function vote(id,value){
-    alert("Голос: " + value);
-
     fetch(API_BASE+`/places/${id}/vote?value=`+value,{
         method:"POST",
         headers:{
             "telegram-id": telegramId
         }
-    }).then(()=>loadPlaces());
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        loadPlaces();
+    });
 }
 
 function toggleFav(id,el){
