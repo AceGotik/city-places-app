@@ -69,32 +69,44 @@ def create_place(place: PlaceSchema):
 
 # ---------- VOTING (1 user = 1 vote) ----------
 
-@app.post("/places/{place_id}/vote")
-def vote(place_id: int, value: int, telegram_id: int = Header()):
-    db = SessionLocal()
-    user = get_or_create_user(db, telegram_id)
+from models import Vote
+from fastapi import Header
 
-    existing_vote = db.query(Vote).filter(
-        Vote.user_id == user.id,
-        Vote.place_id == place_id
+@app.post("/places/{place_id}/vote")
+def vote(place_id: int, value: int, telegram_id: int = Header(None)):
+    db = SessionLocal()
+
+    existing = db.query(Vote).filter(
+        Vote.place_id == place_id,
+        Vote.telegram_id == telegram_id
     ).first()
 
-    place = db.query(Place).filter(Place.id == place_id).first()
-
-    if not place:
-        return {"error": "Place not found"}
-
-    if existing_vote:
-        return {"message": "Already voted"}
-
-    vote = Vote(user_id=user.id, place_id=place_id, value=value)
-    db.add(vote)
-
-    place.rating += value
+    if existing:
+        if existing.value == value:
+            # повторное нажатие — удалить голос
+            db.delete(existing)
+        else:
+            # смена решения
+            existing.value = value
+    else:
+        new_vote = Vote(
+            telegram_id=telegram_id,
+            place_id=place_id,
+            value=value
+        )
+        db.add(new_vote)
 
     db.commit()
-    return {"message": "Voted"}
 
+    # пересчитать рейтинг
+    votes = db.query(Vote).filter(Vote.place_id == place_id).all()
+    total = sum(v.value for v in votes)
+
+    place = db.query(Place).get(place_id)
+    place.rating = total
+    db.commit()
+
+    return {"rating": total}
 
 # ---------- FAVORITES ----------
 
