@@ -2,79 +2,171 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Admin Panel</title>
+
 <style>
-body{background:#0f172a;color:white;font-family:Arial;padding:20px}
-input,select{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:none}
-button{padding:8px 12px;margin:5px;border:none;border-radius:6px;cursor:pointer}
-.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px}
+body{
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+}
+
+h2{margin-top:0;}
+
+input{
+width:100%;
+padding:10px;
+margin:6px 0;
+border-radius:8px;
+border:none;
+}
+
+button{
+padding:8px 14px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin-top:8px;
+}
+
+.add-btn{
+background:#22c55e;
+color:white;
+}
+
+.delete-btn{
+background:#ef4444;
+color:white;
+margin-top:6px;
+}
+
+.card{
+background:rgba(255,255,255,0.08);
+padding:10px;
+border-radius:12px;
+margin-top:10px;
+}
 </style>
 </head>
+
 <body>
 
 <h2>Admin Panel</h2>
 
+<div id="accessMessage"></div>
+
+<div id="adminContent" style="display:none;">
+
+<h3>Добавить заведение</h3>
+
 <input id="name" placeholder="Название">
-<input id="price" type="number" placeholder="Средний чек">
+<input id="average_price" placeholder="Средний чек">
 <input id="street" placeholder="Улица">
-<select id="type">
-<option>Бар</option>
-<option>Кафе</option>
-<option>Ресторан</option>
-<option>Фастфуд</option>
-</select>
-<input id="time" placeholder="10:00-23:00">
-<input id="rating" type="number" placeholder="Рейтинг">
-<input id="image" placeholder="URL картинки">
+<input id="type" placeholder="Тип (Бар/Кафе...)">
+<input id="work_time" placeholder="График работы">
+<input id="image" placeholder="URL изображения">
+<input id="latitude" placeholder="Широта (55.75)">
+<input id="longitude" placeholder="Долгота (37.61)">
 
-<button onclick="addPlace()">Добавить</button>
+<button class="add-btn" onclick="addPlace()">Добавить</button>
 
-<h3>Все заведения</h3>
-<div id="places"></div>
+<h3>Список заведений</h3>
+<div id="placesList"></div>
+
+</div>
 
 <script>
-loadPlaces()
 
-function loadPlaces(){
-fetch("/places")
-.then(res=>res.json())
-.then(data=>{
-const container=document.getElementById("places")
-container.innerHTML=""
-data.forEach(p=>{
-container.innerHTML+=`
-<div class="card">
-<b>${p.name}</b><br>
-💰 ${p.average_price}<br>
-📍 ${p.street}<br>
-🔥 ${p.rating}<br>
-<button onclick="deletePlace(${p.id})">Удалить</button>
-</div>
-`
-})
-})
+Telegram.WebApp.expand();
+
+const API_BASE = "https://city-places-app-production.up.railway.app";
+const telegramId = Telegram.WebApp.initDataUnsafe?.user?.id;
+
+// ВСТАВЬ СВОЙ ID
+const ADMIN_ID = 123456789;
+
+if(!telegramId){
+    document.getElementById("accessMessage").innerHTML = "Открой через Telegram.";
+}
+else if(telegramId != ADMIN_ID){
+    document.getElementById("accessMessage").innerHTML = "Нет доступа.";
+}
+else{
+    document.getElementById("adminContent").style.display = "block";
+    loadPlaces();
 }
 
 function addPlace(){
-fetch("/places",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-name:name.value,
-average_price:price.value?parseInt(price.value):null,
-street:street.value,
-type:type.value,
-work_time:time.value,
-rating:rating.value?parseInt(rating.value):0,
-image:image.value
-})
-}).then(()=>loadPlaces())
+
+    const data = {
+        name: document.getElementById("name").value,
+        average_price: parseInt(document.getElementById("average_price").value) || null,
+        street: document.getElementById("street").value,
+        type: document.getElementById("type").value,
+        work_time: document.getElementById("work_time").value,
+        image: document.getElementById("image").value,
+        latitude: parseFloat(document.getElementById("latitude").value) || null,
+        longitude: parseFloat(document.getElementById("longitude").value) || null
+    };
+
+    fetch(API_BASE + "/places",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(res=>res.json())
+    .then(()=>{
+        clearInputs();
+        loadPlaces();
+    });
 }
 
 function deletePlace(id){
-fetch("/places/"+id,{method:"DELETE"})
-.then(()=>loadPlaces())
+    fetch(API_BASE + `/admin/places/${id}`,{
+        method:"DELETE",
+        headers:{
+            "telegram-id": telegramId
+        }
+    })
+    .then(res=>res.json())
+    .then(()=>{
+        loadPlaces();
+    });
 }
+
+function loadPlaces(){
+    fetch(API_BASE + "/places")
+    .then(res=>res.json())
+    .then(data=>{
+        const container = document.getElementById("placesList");
+        container.innerHTML = "";
+
+        data.forEach(place=>{
+            container.innerHTML += `
+                <div class="card">
+                    <b>${place.name}</b><br>
+                    💰 ${place.average_price || "-"} ₽<br>
+                    📍 ${place.street || "-"}<br>
+                    ⭐ ${place.rating || 0}<br>
+                    <button class="delete-btn" onclick="deletePlace(${place.id})">
+                        Удалить
+                    </button>
+                </div>
+            `;
+        });
+    });
+}
+
+function clearInputs(){
+    document.querySelectorAll("input").forEach(i=>i.value="");
+}
+
 </script>
 
 </body>
