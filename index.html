@@ -262,10 +262,15 @@ container.innerHTML+=`
 }
 
 function vote(id,value){
-fetch(API_BASE+`/places/${id}/vote?value=`+value,{
-method:"POST",
-headers:{"telegram-id":telegramId}
-}).then(()=>loadPlaces());
+    fetch(API_BASE+`/places/${id}/vote?value=`+value,{
+        method:"POST",
+        headers:{
+            "telegram-id": telegramId
+        }
+    }).then(res=>res.json())
+      .then(data=>{
+          loadPlaces();
+      });
 }
 
 function toggleFav(id,el){
