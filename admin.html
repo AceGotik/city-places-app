@@ -120,15 +120,19 @@ else{
 
 function addPlace(){
 
+    const avg = document.getElementById("average_price").value.trim();
+    const lat = document.getElementById("latitude").value.trim();
+    const lon = document.getElementById("longitude").value.trim();
+
     const data = {
-        name: document.getElementById("name").value,
-        average_price: parseInt(document.getElementById("average_price").value) || null,
-        street: document.getElementById("street").value,
-        type: parseInt(document.getElementById("type").value),
-        work_time: document.getElementById("work_time").value,
-        image: document.getElementById("image").value,
-        latitude: parseFloat(document.getElementById("latitude").value) || null,
-        longitude: parseFloat(document.getElementById("longitude").value) || null
+        name: document.getElementById("name").value.trim(),
+        average_price: avg ? parseInt(avg) : null,
+        street: document.getElementById("street").value.trim() || null,
+        type: document.getElementById("type").value.trim() || null,
+        work_time: document.getElementById("work_time").value.trim() || null,
+        image: document.getElementById("image").value.trim() || null,
+        latitude: lat ? parseFloat(lat) : null,
+        longitude: lon ? parseFloat(lon) : null
     };
 
     fetch(API_BASE + "/places",{
@@ -138,7 +142,13 @@ function addPlace(){
         },
         body: JSON.stringify(data)
     })
-    .then(()=> {
+    .then(res => {
+        if(!res.ok){
+            console.log("Ошибка:", res.status);
+        }
+        return res.json();
+    })
+    .then(()=>{
         clearInputs();
         loadPlaces();
     });
