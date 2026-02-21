@@ -67,10 +67,10 @@ margin-top:10px;
 <input id="average_price" placeholder="Средний чек">
 <input id="street" placeholder="Улица">
 <select id="type">
-  <option value="Бар">Бар</option>
-  <option value="Кафе">Кафе</option>
-  <option value="Ресторан">Ресторан</option>
-  <option value="Фастфуд">Фастфуд</option>
+  <option value="1">Бар</option>
+  <option value="2">Кафе</option>
+  <option value="3">Ресторан</option>
+  <option value="4">Фастфуд</option>
 </select>
 <input id="work_time" placeholder="График работы">
 <input id="image" placeholder="URL изображения">
@@ -124,7 +124,7 @@ function addPlace(){
         name: document.getElementById("name").value,
         average_price: parseInt(document.getElementById("average_price").value) || null,
         street: document.getElementById("street").value,
-        type: document.getElementById("type").value,
+        type: parseInt(document.getElementById("type").value),
         work_time: document.getElementById("work_time").value,
         image: document.getElementById("image").value,
         latitude: parseFloat(document.getElementById("latitude").value) || null,
