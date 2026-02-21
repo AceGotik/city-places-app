@@ -322,6 +322,8 @@ fetch(API_BASE+"/places_with_vote",{headers:{"telegram-id":telegramId}})
 .then(res=>res.json())
 .then(data=>{
 
+console.log(data[0]);
+
 let newPlaces = data.filter(p => p.created_at && isNew(p.created_at));
 const newBtn = document.getElementById("newFilter");
 
