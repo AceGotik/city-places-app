@@ -71,6 +71,11 @@ def get_or_create_user(db: Session, telegram_id: int):
 # PLACES
 # =============================
 
+@app.get("/debug-encoding")
+def debug_encoding(db: Session = Depends(get_db)):
+    result = db.execute("SHOW client_encoding;").fetchone()
+    return {"client_encoding": result[0]}
+
 @app.get("/places")
 def get_places(db: Session = Depends(get_db)):
     return db.query(Place).all()
