@@ -114,6 +114,26 @@ def get_places_with_vote(
 
 @app.post("/places")
 def create_place(place: PlaceSchema, db: Session = Depends(get_db)):
+
+    # 🔥 FIX BROKEN UTF-8
+    if place.type:
+        try:
+            place.type = place.type.encode('latin1').decode('utf-8')
+        except:
+            pass
+
+    if place.name:
+        try:
+            place.name = place.name.encode('latin1').decode('utf-8')
+        except:
+            pass
+
+    if place.street:
+        try:
+            place.street = place.street.encode('latin1').decode('utf-8')
+        except:
+            pass
+
     new_place = Place(**place.dict(), rating=0)
     db.add(new_place)
     db.commit()
