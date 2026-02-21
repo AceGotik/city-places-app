@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional
 from database import engine, Base, SessionLocal
 from models import Place, User, Vote, Favorite, Banner
+from sqlalchemy import text
 
 app = FastAPI()
 
