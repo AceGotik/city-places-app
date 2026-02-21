@@ -348,6 +348,11 @@ if(activeFilter === "popular"){
 previewMarkers.clearLayers();
 if(fullMarkers) fullMarkers.clearLayers();
 
+const container = document.getElementById("placesContainer");
+container.innerHTML = "";
+
+data.forEach(place=>{
+
 data.forEach(place=>{
 let markerClass="zen-neutral";
 if(place.rating>0) markerClass="zen-positive";
