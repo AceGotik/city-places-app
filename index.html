@@ -120,6 +120,10 @@ font-size:26px;background:rgba(255,255,255,0.08);
 box-shadow:0 0 20px rgba(0,0,0,0.4);
 margin-bottom:6px;
 }
+.cat.active div{
+background:rgba(77,163,255,0.25);
+box-shadow:0 0 20px #4da3ff;
+}
 
 /* FILTERS */
 .filters{
@@ -374,8 +378,6 @@ let allPlaces = [];
 let activeCategory = "all";
 let activeFilter = "all";
 
-let activeFilter = "all";
-
 function isNew(createdAt){
   const now = new Date();
   const created = new Date(createdAt);
@@ -591,6 +593,27 @@ document.querySelectorAll(".filter-btn").forEach(btn=>{
     }
 
     renderPlaces();   // 👈 ВОТ ЭТО ВАЖНО
+  }
+});
+
+document.querySelectorAll(".cat").forEach(cat => {
+  cat.onclick = function(){
+
+    const text = this.innerText.trim();
+
+    // снимаем активность
+    document.querySelectorAll(".cat")
+      .forEach(c => c.classList.remove("active"));
+
+    this.classList.add("active");
+
+    if(text === "Бар") activeCategory = "Бар";
+    else if(text === "Кафе") activeCategory = "Кафе";
+    else if(text === "Ресторан") activeCategory = "Ресторан";
+    else if(text === "Фастфуд") activeCategory = "Фастфуд";
+    else activeCategory = "all";
+
+    renderPlaces();
   }
 });
 
