@@ -322,25 +322,24 @@ fetch(API_BASE+"/places_with_vote",{headers:{"telegram-id":telegramId}})
 .then(res=>res.json())
 .then(data=>{
 
-let newPlaces = data.filter(p => isNew(p.created_at || p.createdAt));
+let newPlaces = data.filter(p => p.created_at && isNew(p.created_at));
 const newBtn = document.getElementById("newFilter");
 
-// Подсветка если есть новые
+// Подсветка кнопки "Новое"
 if(newPlaces.length > 0 && activeFilter !== "new"){
   newBtn.classList.add("new-glow");
 }else{
   newBtn.classList.remove("new-glow");
 }
 
-// ФИЛЬТР "Новое"
+// Фильтр "Новое"
 if(activeFilter === "new"){
   data = newPlaces.sort(
-    (a,b)=> new Date(b.created_at || b.createdAt) - 
-            new Date(a.created_at || a.createdAt)
+    (a,b)=> new Date(b.created_at) - new Date(a.created_at)
   );
 }
 
-// ФИЛЬТР "Популярные"
+// Фильтр "Популярные"
 if(activeFilter === "popular"){
   data = data.sort((a,b)=> (b.rating||0) - (a.rating||0));
 }
@@ -353,7 +352,6 @@ container.innerHTML = "";
 
 data.forEach(place=>{
 
-data.forEach(place=>{
 let markerClass="zen-neutral";
 if(place.rating>0) markerClass="zen-positive";
 if(place.rating<0) markerClass="zen-negative";
@@ -396,6 +394,7 @@ container.innerHTML+=`
 </div>
 </div>`;
 });
+
 });
 }
 
