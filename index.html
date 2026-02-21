@@ -334,37 +334,44 @@ function isNew(createdAt){
 }
 
 function initPreviewMap(){
-previewMap=L.map('map',{
-zoomControl:false,
-dragging:false,
-scrollWheelZoom:false,
-doubleClickZoom:false
-}).setView([53.9045,27.5615],12);
+  previewMap = L.map('map',{
+    zoomControl:false,
+    attributionControl:false,
+    dragging:false,
+    scrollWheelZoom:false,
+    doubleClickZoom:false
+  }).setView([53.9045,27.5615],12); // Минск
 
-L.tileLayer(
-'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-{subdomains:'abcd',maxZoom:20}
-).addTo(previewMap);
+  L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    { subdomains:'abcd', maxZoom:20 }
+  ).addTo(previewMap);
 
-previewMarkers=L.layerGroup().addTo(previewMap);
+  previewMarkers = L.layerGroup().addTo(previewMap);
 }
 
 function openFullMap(){
-document.getElementById("mapScreen").style.display="flex";
+  document.getElementById("mapScreen").style.display = "flex";
 
-if(!fullMap){
-fullMap=L.map('fullMap').setView([53.9045,27.5615],13);
+  if(!fullMap){
+    fullMap = L.map('fullMap',{
+      zoomControl:true,
+      attributionControl:false
+    }).setView([53.9045,27.5615],13);
 
-L.tileLayer(
-'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-{subdomains:'abcd',maxZoom:20}
-).addTo(fullMap);
+    L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      { subdomains:'abcd', maxZoom:20 }
+    ).addTo(fullMap);
 
-fullMarkers=L.layerGroup().addTo(fullMap);
+    fullMarkers = L.layerGroup().addTo(fullMap);
+  }
+
+  setTimeout(()=>{ fullMap.invalidateSize(); }, 200);
+
+  loadPlaces(true); // 🔥 перезагружаем маркеры
 }
-setTimeout(()=>fullMap.invalidateSize(),200);
-}
-
+  
 document.getElementById("map").onclick=openFullMap;
 document.getElementById("closeMapBtn").onclick=()=>{
 document.getElementById("mapScreen").style.display="none";
@@ -383,11 +390,23 @@ setTimeout(()=>heart.remove(),1000);
 }
 
 function loadPlaces(){
-fetch(API_BASE+"/places_with_vote",{headers:{"telegram-id":telegramId}})
+
+fetch(API_BASE+"/places_with_vote",{
+headers:{"telegram-id":telegramId}
+})
 .then(res=>res.json())
 .then(data=>{
 
 console.log(data[0]);
+
+// 🔥 БЕЗОПАСНАЯ очистка слоёв
+if(previewMarkers){
+  previewMarkers.clearLayers();
+}
+
+if(fullMarkers){
+  fullMarkers.clearLayers();
+}
 
 let newPlaces = data.filter(p => p.created_at && isNew(p.created_at));
 const newBtn = document.getElementById("newFilter");
