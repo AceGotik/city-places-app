@@ -266,10 +266,9 @@ map=L.map('map',{zoomControl:false,attributionControl:false})
 .setView([55.751244,37.618423],12);
 
 L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
   {
-    subdomains: 'abcd',
-    maxZoom: 20
+    maxZoom: 19
   }
 ).addTo(map);
 
