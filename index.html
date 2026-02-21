@@ -430,9 +430,6 @@ if(activeFilter === "popular"){
   data = [...data].sort((a,b)=> (b.rating||0) - (a.rating||0));
 }
 
-previewMarkers.clearLayers();
-if(fullMarkers) fullMarkers.clearLayers();
-
 const container = document.getElementById("placesContainer");
 container.innerHTML = "";
 
@@ -446,13 +443,6 @@ if(place.type === "Ресторан") emoji = "🍽";
 if(place.type === "Фастфуд") emoji = "🍔";
 
 if(place.latitude && place.longitude){
-
-let emoji = "📍";
-
-if(place.type === "Кафе") emoji = "☕";
-if(place.type === "Бар") emoji = "🍸";
-if(place.type === "Ресторан") emoji = "🍽";
-if(place.type === "Фастфуд") emoji = "🍔";
 
 const icon = L.divIcon({
 className:"",
