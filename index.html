@@ -137,11 +137,20 @@ background:rgba(255,255,255,0.15);
 }
 
 .new-glow{
+position:relative;
 border-radius:20px;
+}
+
+.new-glow::after{
+content:"";
+position:absolute;
+inset:-2px;
+border-radius:22px;
+border:2px solid #00ff88;
 box-shadow:
-0 0 0 1px #00ff88,
-0 0 14px rgba(0,255,136,.9),
-0 0 24px rgba(0,255,136,.5);
+0 0 10px rgba(0,255,136,.8),
+0 0 20px rgba(0,255,136,.5);
+pointer-events:none;
 }
 
 /* CARDS */
