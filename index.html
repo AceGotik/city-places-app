@@ -279,6 +279,9 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 
 <div class="container">
 
+<!-- ГЛАВНЫЙ ЭКРАН -->
+<div id="homeScreen" class="screen active">
+
 <div class="ads" id="adsContainer"></div>
 
 <div id="map"></div>
@@ -302,18 +305,16 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 </div>
 
 <div class="cards" id="placesContainer"></div>
+
+</div>
+<!-- КОНЕЦ ГЛАВНОГО -->
+
+
+<!-- ВКЛАДКА КАРТЫ -->
+<div id="mapTab" class="screen">
+<div id="fullMapTab" style="height:100vh;"></div>
 </div>
 
-<div class="bottom-nav">
-<div class="nav-item active">🏠<br>Главная</div>
-<div class="nav-item">🗺<br>Карта</div>
-<div class="nav-item">❤️<br>Избранное</div>
-<div class="nav-item">👤<br>Профиль</div>
-</div>
-
-<div id="mapScreen">
-<div id="closeMapBtn">← Назад</div>
-<div id="fullMap"></div>
 </div>
 
 <script>
