@@ -266,8 +266,11 @@ map=L.map('map',{zoomControl:false,attributionControl:false})
 .setView([55.751244,37.618423],12);
 
 L.tileLayer(
-'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-{subdomains:'abcd',maxZoom:20}
+  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  {
+    subdomains: 'abcd',
+    maxZoom: 20
+  }
 ).addTo(map);
 
 markersLayer=L.layerGroup().addTo(map);
