@@ -97,6 +97,12 @@ background:rgba(255,255,255,0.07);
 backdrop-filter:blur(25px);
 border-radius:24px;overflow:hidden;
 position:relative;
+box-shadow:0 0 40px rgba(0,0,0,0.6);
+animation:fadeUp .5s ease forwards;
+}
+@keyframes fadeUp{
+from{opacity:0;transform:translateY(20px);}
+to{opacity:1;transform:translateY(0);}
 }
 .card img{width:100%;height:130px;object-fit:cover;}
 
@@ -109,20 +115,39 @@ font-size:12px;font-weight:bold;
 .rating.negative{background:#ff0000;}
 .rating.neutral{background:rgba(0,0,0,0.6);}
 
+/* FAVORITE */
 .favorite{
 position:absolute;top:10px;right:10px;
-font-size:18px;cursor:pointer;transition:.2s;
+font-size:20px;cursor:pointer;
+opacity:.4;
+transition:.3s;
 }
-.favorite.active{color:#ff4d6d;transform:scale(1.2);}
+.favorite.active{
+opacity:1;
+color:#ff2d55;
+transform:scale(1.2);
+}
 
+/* FLOAT HEARTS */
+@keyframes floatHeart{
+0%{transform:translateY(0) scale(1);opacity:1;}
+100%{transform:translateY(-120px) scale(1.5);opacity:0;}
+}
+.floating-heart{
+position:fixed;font-size:22px;
+animation:floatHeart 1s ease forwards;
+pointer-events:none;
+}
+
+/* VOTE */
 .vote-buttons{display:flex;gap:6px;margin-top:8px;}
 .vote-btn{
 flex:1;padding:6px;border-radius:10px;
 border:none;background:rgba(255,255,255,0.1);
-color:white;cursor:pointer;
+color:white;cursor:pointer;transition:.2s;
 }
-.vote-btn.active-up{background:#1d9bf0;}
-.vote-btn.active-down{background:#ff4d4d;}
+.vote-btn.active-up{background:#1d9bf0;box-shadow:0 0 15px #1d9bf0;}
+.vote-btn.active-down{background:#ff4d4d;box-shadow:0 0 15px #ff4d4d;}
 
 /* NAV */
 .bottom-nav{
@@ -238,6 +263,18 @@ document.getElementById("closeMapBtn").onclick=()=>{
 document.getElementById("mapScreen").style.display="none";
 };
 
+function createHearts(){
+for(let i=0;i<6;i++){
+let heart=document.createElement("div");
+heart.className="floating-heart";
+heart.innerText="💖";
+heart.style.left=Math.random()*window.innerWidth+"px";
+heart.style.top=(window.innerHeight-100)+"px";
+document.body.appendChild(heart);
+setTimeout(()=>heart.remove(),1000);
+}
+}
+
 function loadPlaces(){
 fetch(API_BASE+"/places_with_vote",{headers:{"telegram-id":telegramId}})
 .then(res=>res.json())
@@ -270,6 +307,9 @@ let ratingClass="neutral";
 if(place.rating>0) ratingClass="positive";
 if(place.rating<0) ratingClass="negative";
 
+let upActive=place.user_vote===1?"active-up":"";
+let downActive=place.user_vote===-1?"active-down":"";
+
 container.innerHTML+=`
 <div class="card">
 <div class="rating ${ratingClass}">${place.rating||0}°</div>
@@ -282,8 +322,8 @@ container.innerHTML+=`
 <p>🏷 ${place.type||"-"}</p>
 <p>⏰ ${place.work_time||"-"}</p>
 <div class="vote-buttons">
-<button class="vote-btn" onclick="vote(${place.id},1)">⬆</button>
-<button class="vote-btn" onclick="vote(${place.id},-1)">⬇</button>
+<button class="vote-btn ${upActive}" onclick="vote(${place.id},1)">⬆</button>
+<button class="vote-btn ${downActive}" onclick="vote(${place.id},-1)">⬇</button>
 </div>
 </div>
 </div>`;
@@ -304,6 +344,7 @@ method:"POST",
 headers:{"telegram-id":telegramId}
 }).then(()=>{
 el.classList.toggle("active");
+if(el.classList.contains("active")) createHearts();
 });
 }
 
