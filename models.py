@@ -2,7 +2,16 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String
+from database import Base
 
+class Banner(Base):
+    __tablename__ = "banners"
+
+    id = Column(Integer, primary_key=True, index=True)
+    image = Column(String, nullable=False)
+    link = Column(String, nullable=True)
+    
 class Vote(Base):
     __tablename__ = "votes"
 
