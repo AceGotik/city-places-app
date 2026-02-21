@@ -486,10 +486,11 @@ container.innerHTML = "";
 data.forEach(place=>{
 
 let emoji = "📍";
-if(place.type === "Кафе") emoji = "☕";
-if(place.type === "Бар") emoji = "🍸";
-if(place.type === "Ресторан") emoji = "🍽";
-if(place.type === "Фастфуд") emoji = "🍔";
+
+if(place.type === 1) emoji = "🍸";
+if(place.type === 2) emoji = "☕";
+if(place.type === 3) emoji = "🍽";
+if(place.type === 4) emoji = "🍔";
 
 
 if(place.latitude && place.longitude){
@@ -526,6 +527,12 @@ if(place.rating<0) ratingClass="negative";
 let upActive=place.user_vote===1?"active-up":"";
 let downActive=place.user_vote===-1?"active-down":"";
 
+let typeText = "";
+
+if(place.type === 1) typeText = "Бар";
+if(place.type === 2) typeText = "Кафе";
+if(place.type === 3) typeText = "Ресторан";
+if(place.type === 4) typeText = "Фастфуд";
 
 container.innerHTML+=`
 <div class="card">
@@ -541,7 +548,7 @@ container.innerHTML+=`
 <h3>${place.name}</h3>
 <p>💰 ${place.average_price||"-"} ₽</p>
 <p>📍 ${place.street||"-"}</p>
-<p>🏷 ${place.type||"-"}</p>
+<p>🏷 ${typeText || "-"}</p>
 <p>⏰ ${place.work_time||"-"}</p>
 
 <div class="vote-buttons">
