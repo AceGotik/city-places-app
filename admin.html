@@ -69,26 +69,34 @@ margin-top:10px;
 <input id="type" placeholder="Тип (Бар/Кафе...)">
 <input id="work_time" placeholder="График работы">
 <input id="image" placeholder="URL изображения">
-<input id="latitude" placeholder="Широта (55.75)">
-<input id="longitude" placeholder="Долгота (37.61)">
+<input id="latitude" placeholder="Широта">
+<input id="longitude" placeholder="Долгота">
 
 <button class="add-btn" onclick="addPlace()">Добавить</button>
 
 <h3>Список заведений</h3>
 <div id="placesList"></div>
 
+<hr style="margin:30px 0;opacity:.2">
+
+<h3>Баннеры</h3>
+
+<input id="bannerImage" placeholder="URL картинки">
+<input id="bannerLink" placeholder="Ссылка (необязательно)">
+<button class="add-btn" onclick="addBanner()">Добавить баннер</button>
+
+<div id="bannersList"></div>
+
 </div>
 
 <script>
-
 Telegram.WebApp.expand();
 
 const API_BASE = "https://city-places-app-production.up.railway.app";
 const telegramId = Telegram.WebApp.initDataUnsafe?.user?.id;
+const ADMIN_ID = 315901039; // ← твой ID
 
-// ВСТАВЬ СВОЙ ID
-const ADMIN_ID = 315901039;
-
+// Проверка доступа
 if(!telegramId){
     document.getElementById("accessMessage").innerHTML = "Открой через Telegram.";
 }
@@ -98,7 +106,12 @@ else if(telegramId != ADMIN_ID){
 else{
     document.getElementById("adminContent").style.display = "block";
     loadPlaces();
+    loadBannersAdmin();
 }
+
+// =============================
+// PLACES
+// =============================
 
 function addPlace(){
 
@@ -120,8 +133,7 @@ function addPlace(){
         },
         body: JSON.stringify(data)
     })
-    .then(res=>res.json())
-    .then(()=>{
+    .then(()=> {
         clearInputs();
         loadPlaces();
     });
@@ -134,10 +146,7 @@ function deletePlace(id){
             "telegram-id": telegramId
         }
     })
-    .then(res=>res.json())
-    .then(()=>{
-        loadPlaces();
-    });
+    .then(()=> loadPlaces());
 }
 
 function loadPlaces(){
@@ -163,10 +172,68 @@ function loadPlaces(){
     });
 }
 
-function clearInputs(){
-    document.querySelectorAll("input").forEach(i=>i.value="");
+// =============================
+// BANNERS
+// =============================
+
+function loadBannersAdmin(){
+    fetch(API_BASE + "/banners")
+    .then(res=>res.json())
+    .then(data=>{
+        const container = document.getElementById("bannersList");
+        container.innerHTML = "";
+
+        data.forEach(b=>{
+            container.innerHTML += `
+                <div class="card">
+                    <img src="${b.image}" width="100%"><br>
+                    ${b.link || ""}<br>
+                    <button class="delete-btn" onclick="deleteBanner(${b.id})">
+                        Удалить
+                    </button>
+                </div>
+            `;
+        });
+    });
 }
 
+function addBanner(){
+
+    const data = {
+        image: document.getElementById("bannerImage").value,
+        link: document.getElementById("bannerLink").value || null
+    };
+
+    fetch(API_BASE + "/admin/banners",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            "telegram-id": telegramId
+        },
+        body: JSON.stringify(data)
+    })
+    .then(()=>{
+        document.getElementById("bannerImage").value="";
+        document.getElementById("bannerLink").value="";
+        loadBannersAdmin();
+    });
+}
+
+function deleteBanner(id){
+    fetch(API_BASE + "/admin/banners/" + id,{
+        method:"DELETE",
+        headers:{
+            "telegram-id": telegramId
+        }
+    })
+    .then(()=> loadBannersAdmin());
+}
+
+// =============================
+
+function clearInputs(){
+    document.querySelectorAll("#adminContent input").forEach(i=>i.value="");
+}
 </script>
 
 </body>
