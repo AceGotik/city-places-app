@@ -4,6 +4,10 @@ from database import Base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy import Column, Integer, String
 from database import Base
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from database import Base
+from datetime import datetime
 
 class Banner(Base):
     __tablename__ = "banners"
@@ -41,6 +45,8 @@ class Place(Base):
     # 👇 ВСТАВИТЬ ВОТ ЭТИ ДВЕ СТРОКИ
     latitude = Column(Float)
     longitude = Column(Float)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 class Favorite(Base):
     __tablename__ = "favorites"
