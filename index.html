@@ -21,9 +21,34 @@ overflow-x:hidden;
 
 /* ADS */
 .ads{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:10px;margin-bottom:20px;
+display:flex;
+gap:14px;
+overflow-x:auto;
+scroll-snap-type:x mandatory;
+padding-bottom:10px;
+margin-bottom:20px;
+}
+
+.ads::-webkit-scrollbar{
+display:none;
+}
+
+.ads a{
+flex:0 0 85%;
+scroll-snap-align:center;
+}
+
+.ads img{
+width:100%;
+height:150px;
+object-fit:cover;
+border-radius:22px;
+box-shadow:0 0 25px rgba(0,0,0,0.6);
+transition:transform .3s ease;
+}
+
+.ads img:active{
+transform:scale(.97);
 }
 .ads img{
 width:100%;height:100px;
