@@ -397,9 +397,7 @@ if(previewMarkers){
   previewMarkers.clearLayers();
 }
 
-if(fullMarkers){
-  fullMarkers.clearLayers();
-}
+
 
 let newPlaces = data.filter(p => p.created_at && isNew(p.created_at));
 const newBtn = document.getElementById("newFilter");
