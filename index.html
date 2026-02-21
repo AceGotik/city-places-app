@@ -261,6 +261,13 @@ box-shadow:0 0 30px rgba(0,0,0,0.6);
 }
 .nav-item{text-align:center;font-size:11px;opacity:.6;}
 .nav-item.active{opacity:1;color:#4da3ff;}
+.screen{
+display:none;
+}
+
+.screen.active{
+display:block;
+}
 
 /* MARKERS */
 .zen-marker{
@@ -279,6 +286,13 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 
 <div class="container">
 
+<div class="bottom-nav">
+<div class="nav-item active" onclick="switchTab('home')">🏠<br>Главная</div>
+<div class="nav-item" onclick="switchTab('map')">🗺<br>Карта</div>
+<div class="nav-item">❤️<br>Избранное</div>
+<div class="nav-item">👤<br>Профиль</div>
+</div>
+  
 <!-- ГЛАВНЫЙ ЭКРАН -->
 <div id="homeScreen" class="screen active">
 
@@ -562,6 +576,98 @@ document.querySelectorAll(".filter-btn").forEach(btn=>{
     loadPlaces();
   }
 });
+
+let fullMapTab;
+let fullMapMarkers;
+
+function switchTab(tab){
+
+document.querySelectorAll(".screen")
+.forEach(s=>s.classList.remove("active"));
+
+document.querySelectorAll(".nav-item")
+.forEach(n=>n.classList.remove("active"));
+
+if(tab === "home"){
+document.getElementById("homeScreen").classList.add("active");
+document.querySelectorAll(".nav-item")[0].classList.add("active");
+}
+
+if(tab === "map"){
+document.getElementById("mapTab").classList.add("active");
+document.querySelectorAll(".nav-item")[1].classList.add("active");
+
+if(!fullMapTab){
+
+fullMapTab = L.map('fullMapTab',{
+zoomControl:true,
+attributionControl:false
+}).setView([53.9045,27.5615],13);
+
+L.tileLayer(
+'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+{ subdomains:'abcd', maxZoom:20 }
+).addTo(fullMapTab);
+
+fullMapMarkers = L.layerGroup().addTo(fullMapTab);
+}
+
+setTimeout(()=>fullMapTab.invalidateSize(),200);
+
+loadFullMapMarkers();
+}
+}
+
+function loadFullMapMarkers(){
+
+if(!fullMapMarkers) return;
+
+fullMapMarkers.clearLayers();
+
+fetch(API_BASE+"/places_with_vote",{
+headers:{"telegram-id":telegramId}
+})
+.then(res=>res.json())
+.then(data=>{
+
+data.forEach(place=>{
+
+if(place.latitude && place.longitude){
+
+let emoji="📍";
+if(place.type==="Кафе") emoji="☕";
+if(place.type==="Бар") emoji="🍸";
+if(place.type==="Ресторан") emoji="🍽";
+if(place.type==="Фастфуд") emoji="🍔";
+
+const icon=L.divIcon({
+className:"",
+html:`
+<div style="
+width:44px;
+height:44px;
+border-radius:50%;
+background:linear-gradient(135deg,#1d9bf0,#4da3ff);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:20px;
+box-shadow:0 0 20px rgba(0,0,0,0.4);
+">
+${emoji}
+</div>
+`,
+iconSize:[44,44],
+iconAnchor:[22,22]
+});
+
+L.marker([place.latitude,place.longitude],{icon})
+.addTo(fullMapMarkers);
+}
+
+});
+});
+}
   
 initPreviewMap();
 loadPlaces();
