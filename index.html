@@ -457,7 +457,7 @@ if(newPlaces.length > 0 && activeFilter !== "new"){
 // 🔹 ФИЛЬТР ПО КАТЕГОРИИ
 // 🔹 ФИЛЬТР ПО КАТЕГОРИИ
 if(activeCategory !== "all"){
-  data = data.filter(p => p.type === activeCategory);
+  data = data.filter(p => parseInt(p.type) === activeCategory);
 }
 
 
