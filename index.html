@@ -17,6 +17,7 @@ background:linear-gradient(180deg,#07142c,#020817);
 color:white;
 overflow-x:hidden;
 }
+
 .container{
 padding:16px;
 padding-top:24px;
@@ -32,16 +33,8 @@ scroll-snap-type:x mandatory;
 padding-bottom:10px;
 margin-bottom:20px;
 }
-
-.ads::-webkit-scrollbar{
-display:none;
-}
-
-.ads a{
-flex:0 0 42%;   /* ← видно 2 полностью + кусочек 3 */
-scroll-snap-align:center;
-}
-
+.ads::-webkit-scrollbar{display:none;}
+.ads a{flex:0 0 42%;scroll-snap-align:center;}
 .ads img{
 width:100%;
 height:130px;
@@ -50,12 +43,9 @@ border-radius:22px;
 box-shadow:0 0 25px rgba(0,0,0,0.6);
 transition:transform .3s ease;
 }
+.ads img:active{transform:scale(.97);}
 
-.ads img:active{
-transform:scale(.97);
-}
-
-/* PREVIEW MAP */
+/* MAP */
 #map{
 height:260px;
 border-radius:26px;
@@ -66,7 +56,6 @@ cursor:pointer;
 }
 .leaflet-control-container{display:none;}
 
-/* FULL MAP */
 #mapScreen{
 position:fixed;top:0;left:0;width:100%;height:100%;
 background:#07142c;z-index:999;display:none;
@@ -80,24 +69,15 @@ cursor:pointer;
 
 /* SEARCH */
 .search input{
-width:100%;padding:14px;border-radius:20px;
-border:none;font-size:15px;
+width:100%;
+padding:14px;
+border-radius:20px;
+border:none;
+font-size:15px;
 background:rgba(255,255,255,0.08);
-color:white;outline:none;margin-bottom:20px;
-}
-
-/* CATEGORIES */
-.categories{
-display:flex;justify-content:space-between;
+color:white;
+outline:none;
 margin-bottom:20px;
-}
-.cat{text-align:center;font-size:12px;}
-.cat div{
-width:65px;height:65px;border-radius:20px;
-display:flex;align-items:center;justify-content:center;
-font-size:26px;background:rgba(255,255,255,0.08);
-box-shadow:0 0 20px rgba(0,0,0,0.4);
-margin-bottom:6px;
 }
 
 /* FILTERS */
@@ -106,8 +86,8 @@ display:flex;
 gap:12px;
 margin-bottom:22px;
 overflow-x:auto;
-overflow-y:visible; /* ← ВАЖНО */
-padding:8px 6px;     /* чуть больше воздуха */
+overflow-y:visible;
+padding:8px 6px;
 }
 
 .filter-btn{
@@ -135,9 +115,12 @@ box-shadow:
 
 /* CARDS */
 .cards{
-display:grid;grid-template-columns:repeat(2,1fr);
+display:grid;
+grid-template-columns:repeat(2,1fr);
 gap:16px;
-}.card{
+}
+
+.card{
 background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03));
 backdrop-filter:blur(30px);
 border-radius:26px;
@@ -146,21 +129,7 @@ position:relative;
 box-shadow:0 10px 40px rgba(0,0,0,0.6);
 transition:.25s ease;
 }
-
-.card:active{
-transform:scale(.97);
-}
-  
-@keyframes fadeUp{
-from{opacity:0;transform:translateY(20px);}
-to{opacity:1;transform:translateY(0);}
-}
-.card img{
-width:100%;
-height:150px;
-object-fit:cover;
-filter:saturate(115%) contrast(105%);
-}
+.card:active{transform:scale(.97);}
 
 .img-wrapper{
 position:relative;
@@ -168,14 +137,12 @@ width:100%;
 height:150px;
 overflow:hidden;
 }
-
 .img-wrapper img{
 width:100%;
 height:150px;
 object-fit:cover;
 filter:saturate(115%) contrast(105%);
 }
-
 .img-gradient{
 position:absolute;
 bottom:0;
@@ -187,18 +154,24 @@ pointer-events:none;
 }
 
 .rating{
-position:absolute;top:10px;left:10px;
-padding:6px 10px;border-radius:12px;
-font-size:12px;font-weight:bold;
+position:absolute;
+top:10px;
+left:10px;
+padding:6px 10px;
+border-radius:12px;
+font-size:12px;
+font-weight:bold;
 }
 .rating.positive{background:#00cc66;color:black;}
 .rating.negative{background:#ff0000;}
 .rating.neutral{background:rgba(0,0,0,0.6);}
 
-/* FAVORITE */
 .favorite{
-position:absolute;top:10px;right:10px;
-font-size:20px;cursor:pointer;
+position:absolute;
+top:10px;
+right:10px;
+font-size:20px;
+cursor:pointer;
 opacity:.4;
 transition:.3s;
 }
@@ -208,23 +181,20 @@ color:#ff2d55;
 transform:scale(1.2);
 }
 
-/* FLOAT HEARTS */
-@keyframes floatHeart{
-0%{transform:translateY(0) scale(1);opacity:1;}
-100%{transform:translateY(-120px) scale(1.5);opacity:0;}
+.vote-buttons{
+display:flex;
+gap:6px;
+margin-top:8px;
 }
-.floating-heart{
-position:fixed;font-size:22px;
-animation:floatHeart 1s ease forwards;
-pointer-events:none;
-}
-
-/* VOTE */
-.vote-buttons{display:flex;gap:6px;margin-top:8px;}
 .vote-btn{
-flex:1;padding:6px;border-radius:10px;
-border:none;background:rgba(255,255,255,0.1);
-color:white;cursor:pointer;transition:.2s;
+flex:1;
+padding:6px;
+border-radius:10px;
+border:none;
+background:rgba(255,255,255,0.1);
+color:white;
+cursor:pointer;
+transition:.2s;
 }
 .vote-btn.active-up{background:#1d9bf0;box-shadow:0 0 15px #1d9bf0;}
 .vote-btn.active-down{background:#ff4d4d;box-shadow:0 0 15px #ff4d4d;}
@@ -240,45 +210,21 @@ box-shadow:0 0 30px rgba(0,0,0,0.6);
 }
 .nav-item{text-align:center;font-size:11px;opacity:.6;}
 .nav-item.active{opacity:1;color:#4da3ff;}
-
-/* MARKERS */
-.zen-marker{
-width:44px;height:44px;border-radius:50%;
-display:flex;align-items:center;justify-content:center;
-font-size:13px;font-weight:bold;color:white;
-box-shadow:0 0 25px rgba(0,0,0,0.3);
-}
-.zen-positive{background:linear-gradient(135deg,#00ff99,#00cc66);}
-.zen-negative{background:linear-gradient(135deg,#ff4d4d,#ff0000);}
-.zen-neutral{background:linear-gradient(135deg,#4da3ff,#1d9bf0);}
-.new-glow{
-border:1px solid #00ff88;
-box-shadow:0 0 8px rgba(0,255,136,.7);
-}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
 <div class="ads" id="adsContainer"></div>
-
 <div id="map"></div>
 
 <div class="search">
 <input type="text" placeholder="Поиск заведения...">
 </div>
 
-<div class="categories">
-<div class="cat"><div>🍸</div>Бар</div>
-<div class="cat"><div>☕</div>Кафе</div>
-<div class="cat"><div>🍽️</div>Ресторан</div>
-<div class="cat"><div>🍔</div>Фастфуд</div>
-</div>
-
 <div class="filters">
-<div class="filter-btn" data-filter="all">Все</div>
+<div class="filter-btn active" data-filter="all">Все</div>
 <div class="filter-btn" data-filter="near">Рядом</div>
 <div class="filter-btn" data-filter="popular">Популярные</div>
 <div class="filter-btn" data-filter="new" id="newFilter">Новое</div>
@@ -306,63 +252,12 @@ const API_BASE="https://city-places-app-production.up.railway.app";
 const telegramId=Telegram.WebApp.initDataUnsafe?.user?.id;
 
 let previewMap, fullMap, previewMarkers, fullMarkers;
-
 let activeFilter = "all";
 
 function isNew(createdAt){
-  const now = new Date();
-  const created = new Date(createdAt);
-  const diff = (now - created) / (1000*60*60*24);
-  return diff <= 14;
-}
-
-function initPreviewMap(){
-previewMap=L.map('map',{
-zoomControl:false,
-dragging:false,
-scrollWheelZoom:false,
-doubleClickZoom:false
-}).setView([53.9045,27.5615],12);
-
-L.tileLayer(
-'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-{subdomains:'abcd',maxZoom:20}
-).addTo(previewMap);
-
-previewMarkers=L.layerGroup().addTo(previewMap);
-}
-
-function openFullMap(){
-document.getElementById("mapScreen").style.display="flex";
-
-if(!fullMap){
-fullMap=L.map('fullMap').setView([53.9045,27.5615],13);
-
-L.tileLayer(
-'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-{subdomains:'abcd',maxZoom:20}
-).addTo(fullMap);
-
-fullMarkers=L.layerGroup().addTo(fullMap);
-}
-setTimeout(()=>fullMap.invalidateSize(),200);
-}
-
-document.getElementById("map").onclick=openFullMap;
-document.getElementById("closeMapBtn").onclick=()=>{
-document.getElementById("mapScreen").style.display="none";
-};
-
-function createHearts(){
-for(let i=0;i<6;i++){
-let heart=document.createElement("div");
-heart.className="floating-heart";
-heart.innerText="💖";
-heart.style.left=Math.random()*window.innerWidth+"px";
-heart.style.top=(window.innerHeight-100)+"px";
-document.body.appendChild(heart);
-setTimeout(()=>heart.remove(),1000);
-}
+const now=new Date();
+const created=new Date(createdAt);
+return (now-created)/(1000*60*60*24)<=14;
 }
 
 function loadPlaces(){
@@ -370,54 +265,29 @@ fetch(API_BASE+"/places_with_vote",{headers:{"telegram-id":telegramId}})
 .then(res=>res.json())
 .then(data=>{
 
-console.log(data[0]);
+let newPlaces=data.filter(p=>p.created_at&&isNew(p.created_at));
+const newBtn=document.getElementById("newFilter");
 
-let newPlaces = data.filter(p => p.created_at && isNew(p.created_at));
-const newBtn = document.getElementById("newFilter");
-
-// Подсветка кнопки "Новое"
-if(newPlaces.length > 0 && activeFilter !== "new"){
-  newBtn.classList.add("new-glow");
+if(newPlaces.length>0&&activeFilter!=="new"){
+newBtn.classList.add("new-glow");
 }else{
-  newBtn.classList.remove("new-glow");
+newBtn.classList.remove("new-glow");
 }
 
-// Фильтр "Новое"
-if(activeFilter === "new"){
-  data = newPlaces.sort(
-    (a,b)=> new Date(b.created_at) - new Date(a.created_at)
-  );
+if(activeFilter==="new"){
+data=newPlaces.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+}
+if(activeFilter==="popular"){
+data=data.sort((a,b)=>(b.rating||0)-(a.rating||0));
 }
 
-// Фильтр "Популярные"
-if(activeFilter === "popular"){
-  data = data.sort((a,b)=> (b.rating||0) - (a.rating||0));
-}
+previewMarkers?.clearLayers();
+fullMarkers?.clearLayers();
 
-previewMarkers.clearLayers();
-if(fullMarkers) fullMarkers.clearLayers();
-
-const container = document.getElementById("placesContainer");
-container.innerHTML = "";
+const container=document.getElementById("placesContainer");
+container.innerHTML="";
 
 data.forEach(place=>{
-
-let markerClass="zen-neutral";
-if(place.rating>0) markerClass="zen-positive";
-if(place.rating<0) markerClass="zen-negative";
-
-if(place.latitude && place.longitude){
-const icon=L.divIcon({
-className:"",
-html:`<div class="zen-marker ${markerClass}">${place.rating||0}</div>`,
-iconSize:[44,44],
-iconAnchor:[22,22]
-});
-L.marker([place.latitude,place.longitude],{icon}).addTo(previewMarkers);
-if(fullMarkers){
-L.marker([place.latitude,place.longitude],{icon}).addTo(fullMarkers);
-}
-}
 
 let ratingClass="neutral";
 if(place.rating>0) ratingClass="positive";
@@ -436,7 +306,7 @@ container.innerHTML+=`
 <div class="img-gradient"></div>
 </div>
 
-<div class="card-content">
+<div style="padding:12px">
 <h3>${place.name}</h3>
 <p>💰 ${place.average_price||"-"} ₽</p>
 <p>📍 ${place.street||"-"}</p>
@@ -447,9 +317,9 @@ container.innerHTML+=`
 <button class="vote-btn ${upActive}" onclick="vote(${place.id},1)">⬆</button>
 <button class="vote-btn ${downActive}" onclick="vote(${place.id},-1)">⬇</button>
 </div>
-
 </div>
 </div>`;
+});
 
 });
 }
@@ -465,51 +335,23 @@ function toggleFavorite(id,el){
 fetch(API_BASE+`/places/${id}/favorite`,{
 method:"POST",
 headers:{"telegram-id":telegramId}
-}).then(()=>{
-el.classList.toggle("active");
-if(el.classList.contains("active")) createHearts();
-});
-}
-
-function loadBanners(){
-fetch(API_BASE + "/banners")
-.then(res => res.json())
-.then(data=>{
-const container = document.getElementById("adsContainer");
-container.innerHTML = "";
-
-data.forEach(banner=>{
-container.innerHTML += `
-<a href="${banner.link || '#'}" target="_blank">
-<img src="${banner.image}">
-</a>
-`;
-});
-});
+}).then(()=>{el.classList.toggle("active");});
 }
 
 document.querySelectorAll(".filter-btn").forEach(btn=>{
-  btn.onclick = function(){
-
-    activeFilter = this.dataset.filter;
-
-    document.querySelectorAll(".filter-btn")
-      .forEach(b=>b.classList.remove("active"));
-
-    this.classList.add("active");
-
-    if(activeFilter === "new"){
-      document.getElementById("newFilter")
-        .classList.remove("new-glow");
-    }
-
-    loadPlaces();
-  }
-});
-  
-initPreviewMap();
+btn.onclick=function(){
+activeFilter=this.dataset.filter;
+document.querySelectorAll(".filter-btn")
+.forEach(b=>b.classList.remove("active"));
+this.classList.add("active");
+if(activeFilter==="new"){
+document.getElementById("newFilter").classList.remove("new-glow");
+}
 loadPlaces();
-loadBanners();
+}
+});
+
+loadPlaces();
 </script>
 
 </body>
