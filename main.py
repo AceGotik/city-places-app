@@ -106,7 +106,8 @@ def get_places_with_vote(
             "image": place.image,
             "latitude": place.latitude,
             "longitude": place.longitude,
-            "user_vote": user_vote
+            "user_vote": user_vote,
+            "created_at": place.created_at
         })
 
     return result
