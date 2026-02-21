@@ -334,10 +334,10 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 </div>
 
 <div class="categories">
-<div class="cat"><div>🍸</div>Бар</div>
-<div class="cat"><div>☕</div>Кафе</div>
-<div class="cat"><div>🍽️</div>Ресторан</div>
-<div class="cat"><div>🍔</div>Фастфуд</div>
+  <div class="cat" data-type="1"><div>🍸</div>Бар</div>
+  <div class="cat" data-type="2"><div>☕</div>Кафе</div>
+  <div class="cat" data-type="3"><div>🍽️</div>Ресторан</div>
+  <div class="cat" data-type="4"><div>🍔</div>Фастфуд</div>
 </div>
 
 <div class="filters">
@@ -455,10 +455,9 @@ if(newPlaces.length > 0 && activeFilter !== "new"){
 }
   
 // 🔹 ФИЛЬТР ПО КАТЕГОРИИ
+// 🔹 ФИЛЬТР ПО КАТЕГОРИИ
 if(activeCategory !== "all"){
-  data = data.filter(p =>
-    p.type && p.type.toLowerCase() === activeCategory.toLowerCase()
-  );
+  data = data.filter(p => p.type === activeCategory);
 }
 
 
@@ -483,8 +482,18 @@ if(previewMarkers){
 const container = document.getElementById("placesContainer");
 container.innerHTML = "";
 
+
 data.forEach(place=>{
 
+const typeNames = {
+  1: "Бар",
+  2: "Кафе",
+  3: "Ресторан",
+  4: "Фастфуд"
+};
+
+const typeText = typeNames[place.type];
+  
 let emoji = "📍";
 
 if(place.type === 1) emoji = "🍸";
@@ -618,19 +627,12 @@ document.querySelectorAll(".filter-btn").forEach(btn=>{
 document.querySelectorAll(".cat").forEach(cat => {
   cat.onclick = function(){
 
-    const text = this.innerText.trim();
-
-    // снимаем активность
     document.querySelectorAll(".cat")
       .forEach(c => c.classList.remove("active"));
 
     this.classList.add("active");
 
-    if(text === "Бар") activeCategory = "Бар";
-    else if(text === "Кафе") activeCategory = "Кафе";
-    else if(text === "Ресторан") activeCategory = "Ресторан";
-    else if(text === "Фастфуд") activeCategory = "Фастфуд";
-    else activeCategory = "all";
+    activeCategory = parseInt(this.dataset.type);
 
     renderPlaces();
   }
