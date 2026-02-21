@@ -66,16 +66,27 @@ cursor:pointer;
 }
 .leaflet-control-container{display:none;}
 
-/* FULL MAP */
-#mapScreen{
-position:fixed;top:0;left:0;width:100%;height:100%;
-background:#07142c;z-index:999;display:none;
-flex-direction:column;
+/* FULL MAP TAB */
+#mapTab{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#07142c;
+z-index:1;
 }
-#fullMap{flex:1;}
-#closeMapBtn{
-padding:16px;font-weight:600;font-size:18px;
-cursor:pointer;
+
+.bottom-nav{
+z-index:1000;
+}
+
+#fullMapTab{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
 }
 
 /* SEARCH */
@@ -349,12 +360,10 @@ function isNew(createdAt){
 }
 
 function initPreviewMap(){
+
   previewMap = L.map('map',{
     zoomControl:false,
-    attributionControl:false,
-    dragging:false,
-    scrollWheelZoom:false,
-    doubleClickZoom:false
+    attributionControl:false
   }).setView([53.9045,27.5615],12);
 
   L.tileLayer(
@@ -362,8 +371,20 @@ function initPreviewMap(){
     { subdomains:'abcd', maxZoom:20 }
   ).addTo(previewMap);
 
+  // 🔒 Полностью делаем карту статичной
+  previewMap.dragging.disable();
+  previewMap.scrollWheelZoom.disable();
+  previewMap.doubleClickZoom.disable();
+  previewMap.touchZoom.disable();
+  previewMap.boxZoom.disable();
+  previewMap.keyboard.disable();
+
   previewMarkers = L.layerGroup().addTo(previewMap);
 }
+
+document.getElementById("map").onclick = () => {
+  switchTab('map');
+};
 
 
 function createHearts(){
