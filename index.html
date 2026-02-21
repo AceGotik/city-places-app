@@ -44,7 +44,7 @@ height:320px;
 border-radius:26px;
 margin-bottom:20px;
 box-shadow:0 0 50px rgba(0,0,0,0.6);
-filter:saturate(90%) brightness(105%);
+filter: saturate(115%) contrast(105%);
 }
 .leaflet-control-container{
 display:none;
@@ -266,9 +266,10 @@ map=L.map('map',{zoomControl:false,attributionControl:false})
 .setView([55.751244,37.618423],12);
 
 L.tileLayer(
-  'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
   {
-    maxZoom: 19
+    subdomains: 'abcd',
+    maxZoom: 20
   }
 ).addTo(map);
 
