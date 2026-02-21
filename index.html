@@ -355,7 +355,7 @@ function initPreviewMap(){
     dragging:false,
     scrollWheelZoom:false,
     doubleClickZoom:false
-  }).setView([53.9045,27.5615],12); // Минск
+  }).setView([53.9045,27.5615],12);
 
   L.tileLayer(
     'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
@@ -365,29 +365,7 @@ function initPreviewMap(){
   previewMarkers = L.layerGroup().addTo(previewMap);
 }
 
-function openFullMap(){
-  document.getElementById("mapScreen").style.display = "flex";
 
-  if(!fullMap){
-    fullMap = L.map('fullMap',{
-      zoomControl:true,
-      attributionControl:false
-    }).setView([53.9045,27.5615],13);
-
-    L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      { subdomains:'abcd', maxZoom:20 }
-    ).addTo(fullMap);
-
-    fullMarkers = L.layerGroup().addTo(fullMap);
-  }
-
-  setTimeout(()=>{ fullMap.invalidateSize(); }, 200);
-
-  loadPlaces(true); // 🔥 перезагружаем маркеры
-}
-  
-document.getElementById("map").onclick=openFullMap;
 document.getElementById("closeMapBtn").onclick=()=>{
 document.getElementById("mapScreen").style.display="none";
 };
@@ -582,40 +560,40 @@ let fullMapMarkers;
 
 function switchTab(tab){
 
-document.querySelectorAll(".screen")
-.forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll(".screen")
+    .forEach(s=>s.classList.remove("active"));
 
-document.querySelectorAll(".nav-item")
-.forEach(n=>n.classList.remove("active"));
+  document.querySelectorAll(".nav-item")
+    .forEach(n=>n.classList.remove("active"));
 
-if(tab === "home"){
-document.getElementById("homeScreen").classList.add("active");
-document.querySelectorAll(".nav-item")[0].classList.add("active");
-}
+  if(tab === "home"){
+    document.getElementById("homeScreen").classList.add("active");
+    document.querySelectorAll(".nav-item")[0].classList.add("active");
+  }
 
-if(tab === "map"){
-document.getElementById("mapTab").classList.add("active");
-document.querySelectorAll(".nav-item")[1].classList.add("active");
+  if(tab === "map"){
+    document.getElementById("mapTab").classList.add("active");
+    document.querySelectorAll(".nav-item")[1].classList.add("active");
 
-if(!fullMapTab){
+    if(!fullMapTab){
 
-fullMapTab = L.map('fullMapTab',{
-zoomControl:true,
-attributionControl:false
-}).setView([53.9045,27.5615],13);
+      fullMapTab = L.map('fullMapTab',{
+        zoomControl:true,
+        attributionControl:false
+      }).setView([53.9045,27.5615],13);
 
-L.tileLayer(
-'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-{ subdomains:'abcd', maxZoom:20 }
-).addTo(fullMapTab);
+      L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        { subdomains:'abcd', maxZoom:20 }
+      ).addTo(fullMapTab);
 
-fullMapMarkers = L.layerGroup().addTo(fullMapTab);
-}
+      fullMapMarkers = L.layerGroup().addTo(fullMapTab);
+    }
 
-setTimeout(()=>fullMapTab.invalidateSize(),200);
+    setTimeout(()=>fullMapTab.invalidateSize(),200);
 
-loadFullMapMarkers();
-}
+    loadFullMapMarkers();
+  }
 }
 
 function loadFullMapMarkers(){
