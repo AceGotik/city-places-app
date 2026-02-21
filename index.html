@@ -17,7 +17,11 @@ background:linear-gradient(180deg,#07142c,#020817);
 color:white;
 overflow-x:hidden;
 }
-.container{padding:16px;padding-bottom:120px;}
+.container{
+padding:16px;
+padding-top:24px;
+padding-bottom:140px;
+}
 
 /* ADS */
 .ads{
@@ -99,9 +103,11 @@ margin-bottom:6px;
 /* FILTERS */
 .filters{
 display:flex;
-gap:10px;
-margin-bottom:20px;
+gap:12px;
+margin-bottom:22px;
 overflow-x:auto;
+overflow-y:visible; /* ← ВАЖНО */
+padding:8px 6px;     /* чуть больше воздуха */
 }
 
 .filter-btn{
@@ -119,24 +125,66 @@ opacity:1;
 background:rgba(255,255,255,0.15);
 }
 
+.new-glow{
+border-radius:20px;
+box-shadow:
+0 0 0 1px #00ff88,
+0 0 14px rgba(0,255,136,.9),
+0 0 24px rgba(0,255,136,.5);
+}
+
 /* CARDS */
 .cards{
 display:grid;grid-template-columns:repeat(2,1fr);
 gap:16px;
-}
-.card{
-background:rgba(255,255,255,0.07);
-backdrop-filter:blur(25px);
-border-radius:24px;overflow:hidden;
+}.card{
+background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03));
+backdrop-filter:blur(30px);
+border-radius:26px;
+overflow:hidden;
 position:relative;
-box-shadow:0 0 40px rgba(0,0,0,0.6);
-animation:fadeUp .5s ease forwards;
+box-shadow:0 10px 40px rgba(0,0,0,0.6);
+transition:.25s ease;
 }
+
+.card:active{
+transform:scale(.97);
+}
+  
 @keyframes fadeUp{
 from{opacity:0;transform:translateY(20px);}
 to{opacity:1;transform:translateY(0);}
 }
-.card img{width:100%;height:130px;object-fit:cover;}
+.card img{
+width:100%;
+height:150px;
+object-fit:cover;
+filter:saturate(115%) contrast(105%);
+}
+
+.img-wrapper{
+position:relative;
+width:100%;
+height:150px;
+overflow:hidden;
+}
+
+.img-wrapper img{
+width:100%;
+height:150px;
+object-fit:cover;
+filter:saturate(115%) contrast(105%);
+}
+
+.img-gradient{
+position:absolute;
+bottom:0;
+left:0;
+width:100%;
+height:60%;
+background:linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+pointer-events:none;
+}
 
 .rating{
 position:absolute;top:10px;left:10px;
@@ -382,20 +430,26 @@ container.innerHTML+=`
 <div class="card">
 <div class="rating ${ratingClass}">${place.rating||0}°</div>
 <div class="favorite" onclick="toggleFavorite(${place.id},this)">❤️</div>
+
+<div class="img-wrapper">
 <img src="${place.image||''}">
+<div class="img-gradient"></div>
+</div>
+
 <div class="card-content">
 <h3>${place.name}</h3>
 <p>💰 ${place.average_price||"-"} ₽</p>
 <p>📍 ${place.street||"-"}</p>
 <p>🏷 ${place.type||"-"}</p>
 <p>⏰ ${place.work_time||"-"}</p>
+
 <div class="vote-buttons">
 <button class="vote-btn ${upActive}" onclick="vote(${place.id},1)">⬆</button>
 <button class="vote-btn ${downActive}" onclick="vote(${place.id},-1)">⬇</button>
 </div>
+
 </div>
 </div>`;
-});
 
 });
 }
