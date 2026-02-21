@@ -370,6 +370,9 @@ const API_BASE="https://city-places-app-production.up.railway.app";
 const telegramId=Telegram.WebApp.initDataUnsafe?.user?.id;
 
 let previewMap, fullMap, previewMarkers, fullMarkers;
+let allPlaces = [];
+let activeCategory = "all";
+let activeFilter = "all";
 
 let activeFilter = "all";
 
@@ -428,36 +431,40 @@ headers:{"telegram-id":telegramId}
 .then(res=>res.json())
 .then(data=>{
 
-console.log(data[0]);
+allPlaces = data;   // сохраняем все места
+renderPlaces();     // вызываем рендер
 
-// 🔥 БЕЗОПАСНАЯ очистка слоёв
+});
+}
+
+function renderPlaces(){
+
+let data = [...allPlaces];
+
+
+// 🔹 ФИЛЬТР ПО КАТЕГОРИИ
+if(activeCategory !== "all"){
+  data = data.filter(p => p.type === activeCategory);
+}
+
+
+// 🔹 ФИЛЬТР "НОВОЕ"
+if(activeFilter === "new"){
+  data = data.filter(p => p.created_at && isNew(p.created_at));
+}
+
+
+// 🔹 СОРТИРОВКА "ПОПУЛЯРНЫЕ"
+if(activeFilter === "popular"){
+  data = data.sort((a,b)=> (b.rating||0) - (a.rating||0));
+}
+
+
+// 🔥 Чистим карту
 if(previewMarkers){
   previewMarkers.clearLayers();
 }
 
-
-
-let newPlaces = data.filter(p => p.created_at && isNew(p.created_at));
-const newBtn = document.getElementById("newFilter");
-
-// Подсветка кнопки "Новое"
-if(newPlaces.length > 0 && activeFilter !== "new"){
-  newBtn.classList.add("new-glow");
-}else{
-  newBtn.classList.remove("new-glow");
-}
-
-// Фильтр "Новое"
-if(activeFilter === "new"){
-  data = newPlaces.sort(
-    (a,b)=> new Date(b.created_at) - new Date(a.created_at)
-  );
-}
-
-// Фильтр "Популярные"
-if(activeFilter === "popular"){
-  data = [...data].sort((a,b)=> (b.rating||0) - (a.rating||0));
-}
 
 const container = document.getElementById("placesContainer");
 container.innerHTML = "";
@@ -465,11 +472,11 @@ container.innerHTML = "";
 data.forEach(place=>{
 
 let emoji = "📍";
-
 if(place.type === "Кафе") emoji = "☕";
 if(place.type === "Бар") emoji = "🍸";
 if(place.type === "Ресторан") emoji = "🍽";
 if(place.type === "Фастфуд") emoji = "🍔";
+
 
 if(place.latitude && place.longitude){
 
@@ -495,12 +502,8 @@ iconAnchor:[22,22]
 });
 
 L.marker([place.latitude,place.longitude],{icon}).addTo(previewMarkers);
-
-if(fullMarkers){
-L.marker([place.latitude,place.longitude],{icon}).addTo(fullMarkers);
 }
 
-}
 
 let ratingClass="neutral";
 if(place.rating>0) ratingClass="positive";
@@ -508,6 +511,7 @@ if(place.rating<0) ratingClass="negative";
 
 let upActive=place.user_vote===1?"active-up":"";
 let downActive=place.user_vote===-1?"active-down":"";
+
 
 container.innerHTML+=`
 <div class="card">
@@ -534,7 +538,6 @@ container.innerHTML+=`
 </div>
 </div>`;
 
-});
 });
 }
 
@@ -587,7 +590,7 @@ document.querySelectorAll(".filter-btn").forEach(btn=>{
         .classList.remove("new-glow");
     }
 
-    loadPlaces();
+    renderPlaces();   // 👈 ВОТ ЭТО ВАЖНО
   }
 });
 
