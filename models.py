@@ -1,12 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
-from sqlalchemy import Column, Integer, String
-from database import Base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
-from database import Base
 from datetime import datetime
 
 class Banner(Base):
@@ -38,7 +33,7 @@ class Place(Base):
     name = Column(String, nullable=False)
     average_price = Column(Integer)
     street = Column(String)
-    type = Column(String)
+    type = Column(Integer)
     work_time = Column(String)
     rating = Column(Integer, default=0)
     image = Column(String)
