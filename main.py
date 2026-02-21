@@ -205,3 +205,33 @@ def get_favorites(telegram_id: int = Header()):
         return []
 
     return db.query(Place).filter(Place.id.in_(place_ids)).all()
+
+@app.get("/places_with_vote")
+def get_places_with_vote(telegram_id: int = Header(None)):
+    db = SessionLocal()
+    places = db.query(Place).all()
+
+    result = []
+    for p in places:
+        user_vote = 0
+        if telegram_id:
+            vote = db.query(Vote).filter(
+                Vote.place_id == p.id,
+                Vote.telegram_id == telegram_id
+            ).first()
+            if vote:
+                user_vote = vote.value
+
+        result.append({
+            "id": p.id,
+            "name": p.name,
+            "average_price": p.average_price,
+            "street": p.street,
+            "type": p.type,
+            "work_time": p.work_time,
+            "rating": p.rating,
+            "image": p.image,
+            "user_vote": user_vote
+        })
+
+    return result
