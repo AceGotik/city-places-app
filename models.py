@@ -33,7 +33,7 @@ class Place(Base):
     name = Column(String, nullable=False)
     average_price = Column(Integer)
     street = Column(String)
-    type = Column(Integer)
+    type = Column(String)
     work_time = Column(String)
     rating = Column(Integer, default=0)
     image = Column(String)
