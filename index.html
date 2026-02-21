@@ -198,9 +198,14 @@ pointer-events:none;
 }
 
 .rating{
-position:absolute;top:10px;left:10px;
-padding:6px 10px;border-radius:12px;
-font-size:12px;font-weight:bold;
+position:absolute;
+top:10px;
+left:10px;
+padding:6px 10px;
+border-radius:12px;
+font-size:12px;
+font-weight:bold;
+z-index:10;
 }
 .rating.positive{background:#00cc66;color:black;}
 .rating.negative{background:#ff0000;}
@@ -398,7 +403,7 @@ if(activeFilter === "new"){
 
 // Фильтр "Популярные"
 if(activeFilter === "popular"){
-  data = data.sort((a,b)=> (b.rating||0) - (a.rating||0));
+  data = [...data].sort((a,b)=> (b.rating||0) - (a.rating||0));
 }
 
 previewMarkers.clearLayers();
