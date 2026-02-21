@@ -98,13 +98,25 @@ margin-bottom:6px;
 
 /* FILTERS */
 .filters{
-display:flex;gap:10px;margin-bottom:20px;
+display:flex;
+gap:10px;
+margin-bottom:20px;
 overflow-x:auto;
 }
+
 .filter-btn{
-padding:8px 14px;border-radius:20px;
+padding:8px 14px;
+border-radius:20px;
 background:rgba(255,255,255,0.08);
-font-size:13px;white-space:nowrap;
+font-size:13px;
+white-space:nowrap;
+opacity:.6;
+transition:.2s ease;
+}
+
+.filter-btn.active{
+opacity:1;
+background:rgba(255,255,255,0.15);
 }
 
 /* CARDS */
@@ -191,6 +203,10 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 .zen-positive{background:linear-gradient(135deg,#00ff99,#00cc66);}
 .zen-negative{background:linear-gradient(135deg,#ff4d4d,#ff0000);}
 .zen-neutral{background:linear-gradient(135deg,#4da3ff,#1d9bf0);}
+.new-glow{
+border:1px solid #00ff88;
+box-shadow:0 0 8px rgba(0,255,136,.7);
+}
 </style>
 </head>
 
@@ -214,9 +230,10 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 </div>
 
 <div class="filters">
-<div class="filter-btn">Все</div>
-<div class="filter-btn">Рядом</div>
-<div class="filter-btn">Популярные</div>
+<div class="filter-btn" data-filter="all">Все</div>
+<div class="filter-btn" data-filter="near">Рядом</div>
+<div class="filter-btn" data-filter="popular">Популярные</div>
+<div class="filter-btn" data-filter="new" id="newFilter">Новое</div>
 </div>
 
 <div class="cards" id="placesContainer"></div>
@@ -241,6 +258,15 @@ const API_BASE="https://city-places-app-production.up.railway.app";
 const telegramId=Telegram.WebApp.initDataUnsafe?.user?.id;
 
 let previewMap, fullMap, previewMarkers, fullMarkers;
+
+let activeFilter = "all";
+
+function isNew(createdAt){
+  const now = new Date();
+  const created = new Date(createdAt);
+  const diff = (now - created) / (1000*60*60*24);
+  return diff <= 14;
+}
 
 function initPreviewMap(){
 previewMap=L.map('map',{
@@ -295,11 +321,32 @@ function loadPlaces(){
 fetch(API_BASE+"/places_with_vote",{headers:{"telegram-id":telegramId}})
 .then(res=>res.json())
 .then(data=>{
+
+let newPlaces = data.filter(p => isNew(p.created_at || p.createdAt));
+const newBtn = document.getElementById("newFilter");
+
+// Подсветка если есть новые
+if(newPlaces.length > 0 && activeFilter !== "new"){
+  newBtn.classList.add("new-glow");
+}else{
+  newBtn.classList.remove("new-glow");
+}
+
+// ФИЛЬТР "Новое"
+if(activeFilter === "new"){
+  data = newPlaces.sort(
+    (a,b)=> new Date(b.created_at || b.createdAt) - 
+            new Date(a.created_at || a.createdAt)
+  );
+}
+
+// ФИЛЬТР "Популярные"
+if(activeFilter === "popular"){
+  data = data.sort((a,b)=> (b.rating||0) - (a.rating||0));
+}
+
 previewMarkers.clearLayers();
 if(fullMarkers) fullMarkers.clearLayers();
-
-const container=document.getElementById("placesContainer");
-container.innerHTML="";
 
 data.forEach(place=>{
 let markerClass="zen-neutral";
@@ -381,6 +428,25 @@ container.innerHTML += `
 });
 }
 
+document.querySelectorAll(".filter-btn").forEach(btn=>{
+  btn.onclick = function(){
+
+    activeFilter = this.dataset.filter;
+
+    document.querySelectorAll(".filter-btn")
+      .forEach(b=>b.classList.remove("active"));
+
+    this.classList.add("active");
+
+    if(activeFilter === "new"){
+      document.getElementById("newFilter")
+        .classList.remove("new-glow");
+    }
+
+    loadPlaces();
+  }
+});
+  
 initPreviewMap();
 loadPlaces();
 loadBanners();
