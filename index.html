@@ -443,10 +443,21 @@ function renderPlaces(){
 
 let data = [...allPlaces];
 
+const newBtn = document.getElementById("newFilter");
 
+let newPlaces = allPlaces.filter(p => p.created_at && isNew(p.created_at));
+
+if(newPlaces.length > 0 && activeFilter !== "new"){
+  newBtn.classList.add("new-glow");
+}else{
+  newBtn.classList.remove("new-glow");
+}
+  
 // 🔹 ФИЛЬТР ПО КАТЕГОРИИ
 if(activeCategory !== "all"){
-  data = data.filter(p => p.type === activeCategory);
+  data = data.filter(p =>
+    p.type && p.type.toLowerCase() === activeCategory.toLowerCase()
+  );
 }
 
 
