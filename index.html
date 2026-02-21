@@ -433,7 +433,8 @@ headers:{"telegram-id":telegramId}
 .then(res=>res.json())
 .then(data=>{
 
-allPlaces = data;   // сохраняем все места
+allPlaces = data;    // сохраняем все места
+console.log(allPlaces[0].type)
 renderPlaces();     // вызываем рендер
 
 });
