@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Header
+from fastapi import FastAPI, Header, Depends
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -9,14 +9,20 @@ from models import Place, User, Vote, Favorite, Banner
 
 app = FastAPI()
 
-# создаём таблицы
 Base.metadata.create_all(bind=engine)
 
+ADMIN_ID = 315901039  # твой ID
+
 # =============================
-# CONFIG
+# DB DEPENDENCY (ВАЖНО)
 # =============================
 
-ADMIN_ID = 315901039  # ← ВСТАВЬ СВОЙ TELEGRAM ID
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # =============================
 # FRONT
@@ -31,7 +37,7 @@ def serve_admin():
     return FileResponse("admin.html")
 
 # =============================
-# SCHEMA
+# SCHEMAS
 # =============================
 
 class PlaceSchema(BaseModel):
@@ -66,23 +72,26 @@ def get_or_create_user(db: Session, telegram_id: int):
 # =============================
 
 @app.get("/places")
-def get_places():
-    db = SessionLocal()
+def get_places(db: Session = Depends(get_db)):
     return db.query(Place).all()
 
 @app.get("/places_with_vote")
-def get_places_with_vote(telegram_id: int = Header(None)):
-    db = SessionLocal()
+def get_places_with_vote(
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
     places = db.query(Place).all()
 
     result = []
     for place in places:
         user_vote = 0
+
         if telegram_id:
             vote = db.query(Vote).filter(
                 Vote.place_id == place.id,
                 Vote.telegram_id == telegram_id
             ).first()
+
             if vote:
                 user_vote = vote.value
 
@@ -103,8 +112,7 @@ def get_places_with_vote(telegram_id: int = Header(None)):
     return result
 
 @app.post("/places")
-def create_place(place: PlaceSchema):
-    db = SessionLocal()
+def create_place(place: PlaceSchema, db: Session = Depends(get_db)):
     new_place = Place(**place.dict(), rating=0)
     db.add(new_place)
     db.commit()
@@ -112,15 +120,17 @@ def create_place(place: PlaceSchema):
     return new_place
 
 # =============================
-# DELETE PLACE (ADMIN)
+# DELETE PLACE
 # =============================
 
 @app.delete("/admin/places/{place_id}")
-def delete_place(place_id: int, telegram_id: int = Header(None)):
+def delete_place(
+    place_id: int,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
     if telegram_id != ADMIN_ID:
         return {"error": "Нет доступа"}
-
-    db = SessionLocal()
 
     db.query(Vote).filter(Vote.place_id == place_id).delete()
     db.query(Favorite).filter(Favorite.place_id == place_id).delete()
@@ -135,15 +145,18 @@ def delete_place(place_id: int, telegram_id: int = Header(None)):
     return {"message": "Удалено"}
 
 # =============================
-# VOTING (Pepper logic)
+# VOTING (Pepper style)
 # =============================
 
 @app.post("/places/{place_id}/vote")
-def vote(place_id: int, value: int, telegram_id: int = Header(None)):
+def vote(
+    place_id: int,
+    value: int,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
     if telegram_id is None:
         return {"error": "No telegram_id"}
-
-    db = SessionLocal()
 
     existing_vote = db.query(Vote).filter(
         Vote.place_id == place_id,
@@ -152,9 +165,9 @@ def vote(place_id: int, value: int, telegram_id: int = Header(None)):
 
     if existing_vote:
         if existing_vote.value == value:
-            db.delete(existing_vote)  # убрать голос
+            db.delete(existing_vote)
         else:
-            existing_vote.value = value  # сменить
+            existing_vote.value = value
     else:
         new_vote = Vote(
             place_id=place_id,
@@ -176,15 +189,18 @@ def vote(place_id: int, value: int, telegram_id: int = Header(None)):
     return {"rating": total}
 
 # =============================
-# FAVORITES (toggle)
+# FAVORITES
 # =============================
 
 @app.post("/places/{place_id}/favorite")
-def toggle_favorite(place_id: int, telegram_id: int = Header(None)):
+def toggle_favorite(
+    place_id: int,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
     if telegram_id is None:
         return {"error": "No telegram_id"}
 
-    db = SessionLocal()
     user = get_or_create_user(db, telegram_id)
 
     existing = db.query(Favorite).filter(
@@ -204,11 +220,13 @@ def toggle_favorite(place_id: int, telegram_id: int = Header(None)):
     return {"message": "Added"}
 
 @app.get("/favorites")
-def get_favorites(telegram_id: int = Header(None)):
+def get_favorites(
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
     if telegram_id is None:
         return []
 
-    db = SessionLocal()
     user = get_or_create_user(db, telegram_id)
 
     favs = db.query(Favorite).filter(Favorite.user_id == user.id).all()
@@ -224,16 +242,18 @@ def get_favorites(telegram_id: int = Header(None)):
 # =============================
 
 @app.get("/banners")
-def get_banners():
-    db = SessionLocal()
+def get_banners(db: Session = Depends(get_db)):
     return db.query(Banner).all()
 
 @app.post("/admin/banners")
-def create_banner(banner: BannerSchema, telegram_id: int = Header(None)):
+def create_banner(
+    banner: BannerSchema,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
     if telegram_id != ADMIN_ID:
         return {"error": "Нет доступа"}
 
-    db = SessionLocal()
     new_banner = Banner(**banner.dict())
     db.add(new_banner)
     db.commit()
@@ -241,13 +261,16 @@ def create_banner(banner: BannerSchema, telegram_id: int = Header(None)):
     return new_banner
 
 @app.put("/admin/banners/{banner_id}")
-def update_banner(banner_id: int, banner: BannerSchema, telegram_id: int = Header(None)):
+def update_banner(
+    banner_id: int,
+    banner: BannerSchema,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
     if telegram_id != ADMIN_ID:
         return {"error": "Нет доступа"}
 
-    db = SessionLocal()
     existing = db.query(Banner).filter(Banner.id == banner_id).first()
-
     if not existing:
         return {"error": "Не найден"}
 
@@ -258,13 +281,15 @@ def update_banner(banner_id: int, banner: BannerSchema, telegram_id: int = Heade
     return {"message": "Обновлено"}
 
 @app.delete("/admin/banners/{banner_id}")
-def delete_banner(banner_id: int, telegram_id: int = Header(None)):
+def delete_banner(
+    banner_id: int,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
     if telegram_id != ADMIN_ID:
         return {"error": "Нет доступа"}
 
-    db = SessionLocal()
     banner = db.query(Banner).filter(Banner.id == banner_id).first()
-
     if not banner:
         return {"error": "Не найден"}
 
