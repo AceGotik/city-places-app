@@ -536,13 +536,6 @@ if(place.rating<0) ratingClass="negative";
 let upActive=place.user_vote===1?"active-up":"";
 let downActive=place.user_vote===-1?"active-down":"";
 
-let typeText = "";
-
-if(place.type === 1) typeText = "Бар";
-if(place.type === 2) typeText = "Кафе";
-if(place.type === 3) typeText = "Ресторан";
-if(place.type === 4) typeText = "Фастфуд";
-
 container.innerHTML+=`
 <div class="card">
 <div class="rating ${ratingClass}">${place.rating||0}°</div>
