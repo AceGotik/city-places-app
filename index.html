@@ -344,8 +344,26 @@ if(el.classList.contains("active")) createHearts();
 });
 }
 
+function loadBanners(){
+fetch(API_BASE + "/banners")
+.then(res => res.json())
+.then(data=>{
+const container = document.getElementById("adsContainer");
+container.innerHTML = "";
+
+data.forEach(banner=>{
+container.innerHTML += `
+<a href="${banner.link || '#'}" target="_blank">
+<img src="${banner.image}">
+</a>
+`;
+});
+});
+}
+
 initPreviewMap();
 loadPlaces();
+loadBanners();
 </script>
 
 </body>
