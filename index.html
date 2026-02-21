@@ -263,13 +263,32 @@ color:white;cursor:pointer;transition:.2s;
 
 /* NAV */
 .bottom-nav{
-position:fixed;bottom:20px;left:10px;right:10px;
-display:flex;justify-content:space-around;
-background:rgba(255,255,255,0.08);
+position:fixed;
+bottom:20px;
+left:10px;
+right:10px;
+display:flex;
+justify-content:space-around;
+
+background:rgba(15,25,45,0.75);   /* фиксированный цвет */
 backdrop-filter:blur(25px);
-border-radius:30px;padding:12px 8px;
+
+border-radius:30px;
+padding:12px 8px;
+
 box-shadow:0 0 30px rgba(0,0,0,0.6);
+
+z-index:10000;   /* ВАЖНО */
 }
+
+#mapTab{
+z-index:1;
+}
+
+#fullMapTab{
+z-index:1;
+}
+  
 .nav-item{text-align:center;font-size:11px;opacity:.6;}
 .nav-item.active{opacity:1;color:#4da3ff;}
 .screen{
