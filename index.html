@@ -660,13 +660,16 @@ headers:{"telegram_id":telegramId}
 }
 
 function toggleFavorite(id,el){
-fetch(API_BASE+`/places/${id}/favorite`,{
-method:"POST",
-headers:{"telegram_id":telegramId}
-}).then(()=>{
-el.classList.toggle("active");
-if(el.classList.contains("active")) createHearts();
-});
+
+  fetch(API_BASE+`/places/${id}/favorite`,{
+    method:"POST",
+    headers:{"telegram_id":telegramId}
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    alert("SERVER RESPONSE: " + JSON.stringify(data));
+    el.classList.toggle("active");
+  });
 }
 
 function loadBanners(){
