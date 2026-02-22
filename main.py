@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Header, Depends
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from pydantic import BaseModel
@@ -10,9 +11,19 @@ from sqlalchemy import text
 
 app = FastAPI()
 
+# ✅ ДОБАВЛЕН CORS (БОЛЬШЕ НИЧЕГО НЕ МЕНЯЛОСЬ)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 Base.metadata.create_all(bind=engine)
 
 ADMIN_ID = 315901039  # твой ID
+
 
 # =============================
 # DB DEPENDENCY (ВАЖНО)
@@ -24,6 +35,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 # =============================
 # FRONT
@@ -37,15 +49,18 @@ def serve_frontend():
     response.headers["Expires"] = "0"
     return response
 
+
 @app.middleware("http")
 async def disable_cache(request, call_next):
     response = await call_next(request)
     response.headers["Cache-Control"] = "no-store"
     return response
 
+
 @app.get("/admin")
 def serve_admin():
     return FileResponse("admin.html")
+
 
 # =============================
 # SCHEMAS
@@ -61,9 +76,11 @@ class PlaceSchema(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
 
+
 class BannerSchema(BaseModel):
     image: str
     link: Optional[str] = None
+
 
 # =============================
 # USER HELPER
@@ -78,6 +95,7 @@ def get_or_create_user(db: Session, telegram_id: int):
         db.refresh(user)
     return user
 
+
 # =============================
 # PLACES
 # =============================
@@ -87,9 +105,11 @@ def debug_encoding(db: Session = Depends(get_db)):
     result = db.execute("SHOW client_encoding;").fetchone()
     return {"client_encoding": result[0]}
 
+
 @app.get("/places")
 def get_places(db: Session = Depends(get_db)):
     return db.query(Place).all()
+
 
 @app.get("/places_with_vote")
 def get_places_with_vote(
@@ -128,10 +148,10 @@ def get_places_with_vote(
 
     return result
 
+
 @app.post("/places")
 def create_place(place: PlaceSchema, db: Session = Depends(get_db)):
 
-    # 🔥 FIX BROKEN UTF-8
     if place.type:
         try:
             place.type = place.type.encode('latin1').decode('utf-8')
@@ -155,6 +175,7 @@ def create_place(place: PlaceSchema, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_place)
     return new_place
+
 
 # =============================
 # DELETE PLACE
@@ -181,8 +202,9 @@ def delete_place(
 
     return {"message": "Удалено"}
 
+
 # =============================
-# VOTING (Pepper style)
+# VOTING
 # =============================
 
 @app.post("/places/{place_id}/vote")
@@ -225,6 +247,7 @@ def vote(
 
     return {"rating": total}
 
+
 # =============================
 # FAVORITES
 # =============================
@@ -256,6 +279,7 @@ def toggle_favorite(
 
     return {"message": "Added"}
 
+
 @app.get("/favorites")
 def get_favorites(
     telegram_id: int = Header(None),
@@ -274,6 +298,7 @@ def get_favorites(
 
     return db.query(Place).filter(Place.id.in_(place_ids)).all()
 
+
 # =============================
 # BANNERS
 # =============================
@@ -281,6 +306,7 @@ def get_favorites(
 @app.get("/banners")
 def get_banners(db: Session = Depends(get_db)):
     return db.query(Banner).all()
+
 
 @app.post("/admin/banners")
 def create_banner(
@@ -296,6 +322,7 @@ def create_banner(
     db.commit()
     db.refresh(new_banner)
     return new_banner
+
 
 @app.put("/admin/banners/{banner_id}")
 def update_banner(
@@ -316,6 +343,7 @@ def update_banner(
     db.commit()
 
     return {"message": "Обновлено"}
+
 
 @app.delete("/admin/banners/{banner_id}")
 def delete_banner(
