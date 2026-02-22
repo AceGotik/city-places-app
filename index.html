@@ -356,12 +356,19 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 <div id="fullMapTab" style="height:100vh;"></div>
 </div>
 
+<div id="favoritesTab" class="screen">
+  <div style="padding:16px;">
+    <h2>❤️ Избранное</h2>
+    <div class="cards" id="favoritesContainer"></div>
+  </div>
+</div>
+
 </div>
 
 <div class="bottom-nav">
 <div class="nav-item active" onclick="switchTab('home')">🏠<br>Главная</div>
 <div class="nav-item" onclick="switchTab('map')">🗺<br>Карта</div>
-<div class="nav-item">❤️<br>Избранное</div>
+<div class="nav-item" onclick="switchTab('favorites')">❤️<br>Избранное</div>
 <div class="nav-item">👤<br>Профиль</div>
 </div>
   
@@ -683,8 +690,65 @@ function switchTab(tab){
 
     loadFullMapMarkers();
   }
+    
+    if(tab === "favorites"){
+  document.getElementById("favoritesTab").classList.add("active");
+  document.querySelectorAll(".nav-item")[2].classList.add("active");
+      
+  loadFavorites();
+
+  }
 }
 
+function loadFavorites(){
+
+  fetch(API_BASE + "/favorites",{
+    headers:{"telegram-id":telegramId}
+  })
+  .then(res=>res.json())
+  .then(data=>{
+
+    const container = document.getElementById("favoritesContainer");
+    container.innerHTML = "";
+
+    if(data.length === 0){
+      container.innerHTML = "<p style='opacity:.6'>Пока ничего нет</p>";
+      return;
+    }
+
+    data.forEach(place=>{
+
+      let emoji="📍";
+      if(place.type === 1) emoji="🍸";
+      if(place.type === 2) emoji="☕";
+      if(place.type === 3) emoji="🍽";
+      if(place.type === 4) emoji="🍔";
+
+      let ratingClass="neutral";
+      if(place.rating>0) ratingClass="positive";
+      if(place.rating<0) ratingClass="negative";
+
+      container.innerHTML+=`
+      <div class="card">
+        <div class="rating ${ratingClass}">${place.rating||0}°</div>
+
+        <div class="img-wrapper">
+          <img src="${place.image||''}">
+          <div class="img-gradient"></div>
+        </div>
+
+        <div class="card-content">
+          <h3>${place.name}</h3>
+          <p>💰 ${place.average_price||"-"} ₽</p>
+          <p>🏷 ${emoji}</p>
+          <p>⏰ ${place.work_time||"-"}</p>
+        </div>
+      </div>`;
+    });
+
+  });
+}
+  
 function loadFullMapMarkers(){
 
 if(!fullMapMarkers) return;
