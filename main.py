@@ -208,10 +208,10 @@ def delete_place(
 # =============================
 
 @app.post("/places/{place_id}/vote")
-def vote(
+def def vote(
     place_id: int,
     value: int,
-    telegram_id: int = Header(None),
+    telegram_id: int = Query(None),
     db: Session = Depends(get_db)
 ):
     if telegram_id is None:
