@@ -386,8 +386,7 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 Telegram.WebApp.expand();
 
 const API_BASE="https://city-places-app-production.up.railway.app";
-const telegramId=Telegram.WebApp.initDataUnsafe?.user?.id;
-  alert("TG ID: " + telegramId);
+const telegramId=Telegram.WebApp.initDataUnsafe?.user?.id; 
 
 let previewMap, fullMap, previewMarkers, fullMarkers;
 let allPlaces = [];
@@ -664,16 +663,20 @@ function vote(id,value){
 
 function toggleFavorite(id,el){
 
-  fetch(API_BASE+`/places/${id}/favorite`,{
+  fetch(API_BASE + `/places/${id}/favorite`,{
     method:"POST",
     headers:{
       "telegram-id": telegramId
     }
   })
-  .then(res=>res.json())
-  .then(data=>{
-    alert("SERVER RESPONSE: " + JSON.stringify(data));
+  .then(()=>{
+
     el.classList.toggle("active");
+
+    if(el.classList.contains("active")){
+      createHearts();
+    }
+
   });
 }
 
