@@ -255,7 +255,7 @@ def vote(
 @app.post("/places/{place_id}/favorite")
 def toggle_favorite(
     place_id: int,
-    telegram_id: int = Query(None),
+    telegram_id: int = Header(None),
     db: Session = Depends(get_db)
 ):
     print("TELEGRAM ID:", telegram_id)
@@ -283,15 +283,13 @@ def toggle_favorite(
 
 @app.get("/favorites")
 def get_favorites(
-    telegram_id: Optional[int] = Header(None),
-    q_telegram_id: Optional[int] = Query(None),
+    telegram_id: int = Header(None),
     db: Session = Depends(get_db)
 ):
-    tg = telegram_id or q_telegram_id
-    if tg is None:
+    if telegram_id is None:
         return []
 
-    user = get_or_create_user(db, tg)
+    user = get_or_create_user(db, telegram_id)
 
     favs = db.query(Favorite).filter(Favorite.user_id == user.id).all()
     place_ids = [f.place_id for f in favs]
