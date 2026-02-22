@@ -664,8 +664,23 @@ function toggleFavorite(id,el){
   fetch(API_BASE + `/places/${id}/favorite?telegram_id=${telegramId}`,{
     method:"POST"
   })
-  .then(()=>{
+  .then(res => res.json())
+  .then(data => {
+
+    if(data.error){
+      console.log("Favorite error:", data.error);
+      return;
+    }
+
     el.classList.toggle("active");
+
+    if(el.classList.contains("active")){
+      createHearts();
+    }
+
+  })
+  .catch(err=>{
+    console.log("Favorite request failed:", err);
   });
 }
   
