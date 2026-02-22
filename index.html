@@ -783,28 +783,43 @@ function switchTab(tab){
 }
 
 function loadFavorites(){
-  fetch(API_BASE+`/favorites?telegram_id=${telegramId}`)
-  .then(res=>res.json())
-  .then(data=>{
-    const container=document.getElementById("favoritesContainer");
-    container.innerHTML="";
-    if(!data || data.length===0){
-      container.innerHTML="<p style='opacity:.6'>Пока ничего нет</p>";
+
+  if(!telegramId) return;
+
+  fetch(API_BASE + "/favorites", {
+    headers: {
+      "telegram-id": telegramId
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    const container = document.getElementById("favoritesContainer");
+    container.innerHTML = "";
+
+    if(!data || data.length === 0){
+      container.innerHTML = "<p style='opacity:.6'>Пока ничего нет</p>";
       return;
     }
+
     data.forEach(place=>{
-      container.innerHTML+=`
+      container.innerHTML += `
       <div class="card show">
-        <div class="rating neutral">${place.rating||0}°</div>
+        <div class="rating">${place.rating || 0}°</div>
+
         <div class="img-wrapper">
-          <img src="${place.image||''}">
+          <img src="${place.image || ''}">
           <div class="img-gradient"></div>
         </div>
+
         <div class="card-content">
           <h3>${place.name}</h3>
+          <p>💰 ${place.average_price || "-"} ₽</p>
+          <p>⏰ ${place.work_time || "-"}</p>
         </div>
       </div>`;
     });
+
   });
 }
   
