@@ -282,13 +282,15 @@ def toggle_favorite(
 
 @app.get("/favorites")
 def get_favorites(
-    telegram_id: int = Query(None),
+    telegram_id: Optional[int] = Header(None),
+    q_telegram_id: Optional[int] = Query(None),
     db: Session = Depends(get_db)
 ):
-    if telegram_id is None:
+    tg = telegram_id or q_telegram_id
+    if tg is None:
         return []
 
-    user = get_or_create_user(db, telegram_id)
+    user = get_or_create_user(db, tg)
 
     favs = db.query(Favorite).filter(Favorite.user_id == user.id).all()
     place_ids = [f.place_id for f in favs]
@@ -299,7 +301,6 @@ def get_favorites(
     places = db.query(Place).filter(Place.id.in_(place_ids)).all()
 
     result = []
-
     for place in places:
         result.append({
             "id": place.id,
