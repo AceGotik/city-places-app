@@ -501,19 +501,8 @@ function renderPlaces(){
 let data = [...allPlaces];
 
 const newBtn = document.getElementById("newFilter");
-
 const container = document.getElementById("placesContainer");
-
-// Плавно скрываем
-container.style.opacity = 0;
-
-setTimeout(()=>{
-  container.innerHTML = "";
-  renderCards(data);
-  container.style.opacity = 1;
-}, 150);
-
-return; // важно
+container.innerHTML = "";
   
 let newPlaces = allPlaces.filter(p => p.created_at && isNew(p.created_at));
 
@@ -659,24 +648,6 @@ setTimeout(()=>{
     }, index * 50); // карточки появляются по очереди
   });
 },10);
-
-}
-
-function renderCards(data){
-
-  const container = document.getElementById("placesContainer");
-
-  data.forEach(place=>{
-    // сюда твой существующий код создания карточек
-  });
-
-  setTimeout(()=>{
-    document.querySelectorAll(".card").forEach((card, index)=>{
-      setTimeout(()=>{
-        card.classList.add("show");
-      }, index * 40);
-    });
-  },10);
 
 }
 
