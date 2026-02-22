@@ -151,15 +151,12 @@ box-sizing:border-box;          /* 👈 ВАЖНО */
 }
 
 .filter-btn.active{
-opacity:1;
-background:rgba(255,255,255,0.15);
-}
+  opacity:1;
+  background:rgba(77,163,255,0.25);
+  box-shadow:0 0 20px #4da3ff;
+}  
+  
 
-.filter-btn.new-glow{
-border:2px solid #00ff88;
-box-shadow:0 0 12px rgba(0,255,136,.6);
-opacity:1;
-}
 
 /* CARDS */
 .cards{
@@ -601,36 +598,53 @@ container.innerHTML += `
 document.querySelectorAll(".filter-btn").forEach(btn=>{
   btn.onclick = function(){
 
-    activeFilter = this.dataset.filter;
+    const selected = this.dataset.filter;
+
+    // 🔥 если нажали на уже активный — сбрасываем
+    if(activeFilter === selected){
+      activeFilter = "all";
+      document.querySelectorAll(".filter-btn")
+        .forEach(b=>b.classList.remove("active"));
+      renderPlaces();
+      return;
+    }
+
+    // обычное поведение
+    activeFilter = selected;
 
     document.querySelectorAll(".filter-btn")
       .forEach(b=>b.classList.remove("active"));
 
     this.classList.add("active");
 
-    if(activeFilter === "new"){
-      document.getElementById("newFilter")
-        .classList.remove("new-glow");
-    }
-
-    renderPlaces();   // 👈 ВОТ ЭТО ВАЖНО
+    renderPlaces();
   }
 });
 
 document.querySelectorAll(".cat").forEach(cat => {
   cat.onclick = function(){
 
+    const selected = parseInt(this.dataset.type);
+
+    // 🔥 если нажали повторно — снимаем категорию
+    if(activeCategory === selected){
+      activeCategory = "all";
+      document.querySelectorAll(".cat")
+        .forEach(c => c.classList.remove("active"));
+      renderPlaces();
+      return;
+    }
+
     document.querySelectorAll(".cat")
       .forEach(c => c.classList.remove("active"));
 
     this.classList.add("active");
 
-    activeCategory = parseInt(this.dataset.type);
+    activeCategory = selected;
 
     renderPlaces();
   }
 });
-
 let fullMapTab;
 let fullMapMarkers;
 
