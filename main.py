@@ -296,7 +296,26 @@ def get_favorites(
     if not place_ids:
         return []
 
-    return db.query(Place).filter(Place.id.in_(place_ids)).all()
+    places = db.query(Place).filter(Place.id.in_(place_ids)).all()
+
+    result = []
+
+    for place in places:
+        result.append({
+            "id": place.id,
+            "name": place.name,
+            "average_price": place.average_price,
+            "street": place.street,
+            "type": place.type,
+            "work_time": place.work_time,
+            "rating": place.rating,
+            "image": place.image,
+            "latitude": place.latitude,
+            "longitude": place.longitude,
+            "created_at": place.created_at.isoformat() if place.created_at else None
+        })
+
+    return result
 
 
 # =============================
