@@ -172,6 +172,14 @@ overflow:hidden;
 position:relative;
 box-shadow:0 10px 40px rgba(0,0,0,0.6);
 transition: opacity .25s ease, transform .25s ease;
+opacity: 0;
+transform: scale(0.95);
+transition: transform .25s ease, opacity .25s ease; 
+}
+
+.card.show{
+  opacity: 1;
+  transform: scale(1);
 }
 
 .card:active{
@@ -623,8 +631,12 @@ container.innerHTML+=`
 });
 
 setTimeout(()=>{
-  container.style.opacity = 1;
-},50);
+  document.querySelectorAll(".card").forEach((card, index)=>{
+    setTimeout(()=>{
+      card.classList.add("show");
+    }, index * 50); // карточки появляются по очереди
+  });
+},10);
 
 }
 
