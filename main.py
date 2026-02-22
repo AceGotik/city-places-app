@@ -282,7 +282,7 @@ def toggle_favorite(
 
 @app.get("/favorites")
 def get_favorites(
-    telegram_id: int = Header(None),
+    telegram_id: int = Query(None),
     db: Session = Depends(get_db)
 ):
     if telegram_id is None:
@@ -316,7 +316,6 @@ def get_favorites(
         })
 
     return result
-
 # =============================
 # BANNERS
 # =============================
