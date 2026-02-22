@@ -790,13 +790,15 @@ function loadFavorites(){
   .then(res=>res.json())
   .then(data=>{
 
-    const container = document.getElementById("favoritesContainer");
-    container.innerHTML = "";
+  const container = document.getElementById("favoritesContainer");
 
-    if(data.length === 0){
-      container.innerHTML = "<p style='opacity:.6'>Пока ничего нет</p>";
-      return;
-    }
+container.innerHTML = `
+  <div style="font-size:12px;opacity:.7;word-break:break-all;">
+    ${JSON.stringify(data)}
+  </div>
+`;
+
+return;
 
     data.forEach(place=>{
 
