@@ -204,14 +204,12 @@ def delete_place(
 
 
 # =============================
-# VOTING
-# =============================
 
 @app.post("/places/{place_id}/vote")
 def vote(
     place_id: int,
     value: int,
-    telegram_id: int = Query(None),
+    telegram_id: int = Header(None),
     db: Session = Depends(get_db)
 ):
     if telegram_id is None:
@@ -246,7 +244,6 @@ def vote(
     db.commit()
 
     return {"rating": total}
-
 
 # =============================
 # FAVORITES
