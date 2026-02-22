@@ -392,6 +392,34 @@ function isNew(createdAt){
   return diff <= 14;
 }
 
+// Гео Локация 
+  
+function getUserLocation(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      userLocation = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude
+      };
+    });
+  }
+}
+
+function getDistance(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1*Math.PI/180) *
+    Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Карта
+  
 function initPreviewMap(){
 
   previewMap = L.map('map',{
@@ -473,6 +501,25 @@ if(activeFilter === "new"){
   data = data.filter(p => p.created_at && isNew(p.created_at));
 }
 
+// 🔹 ФИЛЬТР "РЯДОМ"
+if(activeFilter === "near" && userLocation){
+  data = data.filter(p => {
+    if(!p.latitude || !p.longitude) return false;
+
+    const distance = getDistance(
+      userLocation.lat,
+      userLocation.lng,
+      p.latitude,
+      p.longitude
+    );
+
+    p.distance = distance;
+    return distance <= 3; // радиус 3 км
+  });
+
+  data.sort((a,b)=>a.distance-b.distance);
+}
+  
 // 🔎 ПОИСК
 if(searchQuery){
   data = data.filter(p =>
@@ -816,6 +863,7 @@ document.getElementById("searchInput").addEventListener("input", function(){
 initPreviewMap();
 loadPlaces();
 loadBanners();
+getUserLocation();
 </script>
 
 </body>
