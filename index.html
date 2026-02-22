@@ -164,22 +164,24 @@ box-sizing:border-box;          /* 👈 ВАЖНО */
 .cards{
 display:grid;grid-template-columns:repeat(2,1fr);
 gap:16px;
-}.card{
-background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03));
-backdrop-filter:blur(30px);
-border-radius:26px;
-overflow:hidden;
-position:relative;
-box-shadow:0 10px 40px rgba(0,0,0,0.6);
-transition: opacity .25s ease, transform .25s ease;
-opacity: 0;
-transform: scale(0.95);
-transition: transform .25s ease, opacity .25s ease; 
+}
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03));
+  backdrop-filter:blur(30px);
+  border-radius:26px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 10px 40px rgba(0,0,0,0.6);
+
+  opacity:0;
+  transform:translateY(15px) scale(0.97);
+  transition: transform .35s cubic-bezier(.2,.8,.2,1), 
+              opacity .25s ease;
 }
 
 .card.show{
-  opacity: 1;
-  transform: scale(1);
+  opacity:1;
+  transform:translateY(0) scale(1);
 }
 
 .card:active{
