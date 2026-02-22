@@ -652,61 +652,67 @@ setTimeout(()=>{
 
 }
 
-function vote(id,value){
-  fetch(API_BASE+`/places/${id}/vote?value=${value}&telegram_id=${telegramId}`,{
-    method:"POST"
+function vote(id, value){
+  const tg = telegramId || Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  fetch(API_BASE + `/places/${id}/vote?value=${value}`, {
+    method: "POST",
+    headers: {
+      "telegram-id": tg
+    }
   })
-  .then(()=>loadPlaces());
+  .then(()=> loadPlaces())
+  .catch(err => console.error("vote error:", err));
 }
 
 function toggleFavorite(id, el){
-  // Безопасная проверка telegramId
-  const tgId = telegramId || Telegram?.WebApp?.initDataUnsafe?.user?.id;
-  if(!tgId){
-    console.log("toggleFavorite: no telegram id");
-    // временная отладка — можно показать пользователю короткое сообщение
-    // alert("Нет Telegram ID — авторизация не прошла");
+  const tg = telegramId || Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  if(!tg){
+    console.warn("toggleFavorite: no telegram id");
     return;
   }
 
-  // визуальная индикация загрузки (опционально)
+  // блокируем кнопку пока идёт запрос
   el.style.opacity = 0.6;
   el.style.pointerEvents = "none";
 
   fetch(API_BASE + `/places/${id}/favorite`, {
     method: "POST",
     headers: {
-      "telegram-id": tgId
+      "telegram-id": tg
     }
   })
   .then(res => {
-    // если сервер вернул status 204/200 без body, это безопасно
-    try { return res.json(); } catch(e){ return {}; }
+    // попытка распарсить json, если есть
+    return res.text().then(text => {
+      try { return JSON.parse(text); } catch(e){ return {raw: text}; }
+    });
   })
   .then(data => {
-    // восстановим интерактивность
     el.style.opacity = "";
     el.style.pointerEvents = "";
 
-    // отладочный лог
     console.log("favorite response:", data);
 
-    if(data.error){
-      // сервер указал проблему
+    if(data && data.error){
       console.warn("Favorite error:", data.error);
       return;
     }
 
-    // сервер возвращает {message: "Added"} или {message: "Removed"}
-    if(data.message && data.message.toLowerCase().includes("add")){
+    // некоторые варианты ответа: {message: "Added"} / {message: "Removed"}
+    const msg = (data && data.message) ? String(data.message).toLowerCase() : "";
+
+    if(msg.includes("add")){
       el.classList.add("active");
       createHearts();
-    } else {
+    } else if(msg.includes("remov")){
       el.classList.remove("active");
+    } else {
+      // на всякий случай — переключаем
+      el.classList.toggle("active");
     }
   })
   .catch(err => {
-    console.error("toggleFavorite fetch failed:", err);
+    console.error("toggleFavorite failed:", err);
     el.style.opacity = "";
     el.style.pointerEvents = "";
   });
@@ -827,11 +833,14 @@ function switchTab(tab){
 }
 
 function loadFavorites(){
-
-  fetch(API_BASE + `/favorites?telegram_id=${telegramId}`)
+  const tg = telegramId || Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  fetch(API_BASE + "/favorites", {
+    headers: {
+      "telegram-id": tg
+    }
+  })
   .then(res => res.json())
   .then(data => {
-
     const container = document.getElementById("favoritesContainer");
     container.innerHTML = "";
 
@@ -841,26 +850,13 @@ function loadFavorites(){
     }
 
     data.forEach(place=>{
-
-      let emoji="📍";
-      if(place.type == 1) emoji="🍸";
-      if(place.type == 2) emoji="☕";
-      if(place.type == 3) emoji="🍽";
-      if(place.type == 4) emoji="🍔";
-
-      let ratingClass="neutral";
-      if(place.rating>0) ratingClass="positive";
-      if(place.rating<0) ratingClass="negative";
-
-      container.innerHTML+=`
+      container.innerHTML += `
       <div class="card show">
-        <div class="rating ${ratingClass}">${place.rating||0}°</div>
-
+        <div class="rating neutral">${place.rating||0}°</div>
         <div class="img-wrapper">
           <img src="${place.image||''}">
           <div class="img-gradient"></div>
         </div>
-
         <div class="card-content">
           <h3>${place.name}</h3>
           <p>💰 ${place.average_price||"-"} ₽</p>
@@ -869,6 +865,9 @@ function loadFavorites(){
       </div>`;
     });
 
+  })
+  .catch(err => {
+    console.error("loadFavorites error:", err);
   });
 }
 
