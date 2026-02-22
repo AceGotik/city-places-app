@@ -659,28 +659,56 @@ function vote(id,value){
   .then(()=>loadPlaces());
 }
 
-function toggleFavorite(id,el){
+function toggleFavorite(id, el){
+  // Безопасная проверка telegramId
+  const tgId = telegramId || Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  if(!tgId){
+    console.log("toggleFavorite: no telegram id");
+    // временная отладка — можно показать пользователю короткое сообщение
+    // alert("Нет Telegram ID — авторизация не прошла");
+    return;
+  }
 
-  fetch(API_BASE + `/places/${id}/favorite?telegram_id=${telegramId}`,{
-    method:"POST"
+  // визуальная индикация загрузки (опционально)
+  el.style.opacity = 0.6;
+  el.style.pointerEvents = "none";
+
+  fetch(API_BASE + `/places/${id}/favorite`, {
+    method: "POST",
+    headers: {
+      "telegram-id": tgId
+    }
   })
-  .then(res => res.json())
+  .then(res => {
+    // если сервер вернул status 204/200 без body, это безопасно
+    try { return res.json(); } catch(e){ return {}; }
+  })
   .then(data => {
+    // восстановим интерактивность
+    el.style.opacity = "";
+    el.style.pointerEvents = "";
+
+    // отладочный лог
+    console.log("favorite response:", data);
 
     if(data.error){
-      console.log("Favorite error:", data.error);
+      // сервер указал проблему
+      console.warn("Favorite error:", data.error);
       return;
     }
 
-    el.classList.toggle("active");
-
-    if(el.classList.contains("active")){
+    // сервер возвращает {message: "Added"} или {message: "Removed"}
+    if(data.message && data.message.toLowerCase().includes("add")){
+      el.classList.add("active");
       createHearts();
+    } else {
+      el.classList.remove("active");
     }
-
   })
-  .catch(err=>{
-    console.log("Favorite request failed:", err);
+  .catch(err => {
+    console.error("toggleFavorite fetch failed:", err);
+    el.style.opacity = "";
+    el.style.pointerEvents = "";
   });
 }
   
