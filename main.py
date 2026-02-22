@@ -381,3 +381,13 @@ def delete_banner(
     db.commit()
 
     return {"message": "Удалено"}
+
+@app.get("/fix-telegram-column")
+def fix_column(db: Session = Depends(get_db)):
+    db.execute(text("""
+        ALTER TABLE users
+        ALTER COLUMN telegram_id TYPE BIGINT
+        USING telegram_id::bigint;
+    """))
+    db.commit()
+    return {"status": "column updated"}
