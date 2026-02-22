@@ -31,7 +31,17 @@ def get_db():
 
 @app.get("/")
 def serve_frontend():
-    return FileResponse("index.html")
+    response = FileResponse("index.html")
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+@app.middleware("http")
+async def disable_cache(request, call_next):
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 @app.get("/admin")
 def serve_admin():
