@@ -833,14 +833,17 @@ function switchTab(tab){
 }
 
 function loadFavorites(){
+
   const tg = telegramId || Telegram?.WebApp?.initDataUnsafe?.user?.id;
-  fetch(API_BASE + "/favorites", {
-    headers: {
+
+  fetch(API_BASE + "/favorites",{
+    headers:{
       "telegram-id": tg
     }
   })
   .then(res => res.json())
   .then(data => {
+
     const container = document.getElementById("favoritesContainer");
     container.innerHTML = "";
 
@@ -865,10 +868,8 @@ function loadFavorites(){
       </div>`;
     });
 
-  })
-  .catch(err => {
-    console.error("loadFavorites error:", err);
   });
+
 }
 
 document.getElementById("searchInput").addEventListener("input", function(){
