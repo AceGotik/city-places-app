@@ -483,18 +483,12 @@ setTimeout(()=>heart.remove(),1000);
 }
 
 function loadPlaces(){
-
-fetch(API_BASE+"/places_with_vote",{
-headers:{"telegram-id":telegramId}
-})
-.then(res=>res.json())
-.then(data=>{
-
-allPlaces = data;    // сохраняем все места
-console.log(allPlaces[0].type)
-renderPlaces();     // вызываем рендер
-
-});
+  fetch(API_BASE+`/places_with_vote?telegram_id=${telegramId}`)
+  .then(res=>res.json())
+  .then(data=>{
+    allPlaces = data;
+    renderPlaces();
+  });
 }
 
 function renderPlaces(){
@@ -660,22 +654,18 @@ function vote(id,value){
 }
 
 function toggleFavorite(id, el){
-
   fetch(API_BASE+`/places/${id}/favorite?telegram_id=${telegramId}`,{
     method:"POST"
   })
   .then(res=>res.json())
   .then(data=>{
-
     if(data.message === "Added"){
       el.classList.add("active");
       createHearts();
     }else{
       el.classList.remove("active");
     }
-
   });
-
 }
   
 function loadBanners(){
@@ -793,19 +783,15 @@ function switchTab(tab){
 }
 
 function loadFavorites(){
-
   fetch(API_BASE+`/favorites?telegram_id=${telegramId}`)
   .then(res=>res.json())
   .then(data=>{
-
     const container=document.getElementById("favoritesContainer");
     container.innerHTML="";
-
     if(!data || data.length===0){
       container.innerHTML="<p style='opacity:.6'>Пока ничего нет</p>";
       return;
     }
-
     data.forEach(place=>{
       container.innerHTML+=`
       <div class="card show">
@@ -819,9 +805,7 @@ function loadFavorites(){
         </div>
       </div>`;
     });
-
   });
-
 }
   
 document.getElementById("searchInput").addEventListener("input", function(){
