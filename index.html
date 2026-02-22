@@ -652,70 +652,30 @@ setTimeout(()=>{
 
 }
 
-function vote(id, value){
-  const tg = telegramId || Telegram?.WebApp?.initDataUnsafe?.user?.id;
-  fetch(API_BASE + `/places/${id}/vote?value=${value}`, {
-    method: "POST",
-    headers: {
-      "telegram-id": tg
-    }
+function vote(id,value){
+  fetch(API_BASE+`/places/${id}/vote?value=${value}&telegram_id=${telegramId}`,{
+    method:"POST"
   })
-  .then(()=> loadPlaces())
-  .catch(err => console.error("vote error:", err));
+  .then(()=>loadPlaces());
 }
 
 function toggleFavorite(id, el){
-  const tg = telegramId || Telegram?.WebApp?.initDataUnsafe?.user?.id;
-  if(!tg){
-    console.warn("toggleFavorite: no telegram id");
-    return;
-  }
 
-  // блокируем кнопку пока идёт запрос
-  el.style.opacity = 0.6;
-  el.style.pointerEvents = "none";
-
-  fetch(API_BASE + `/places/${id}/favorite`, {
-    method: "POST",
-    headers: {
-      "telegram-id": tg
-    }
+  fetch(API_BASE+`/places/${id}/favorite?telegram_id=${telegramId}`,{
+    method:"POST"
   })
-  .then(res => {
-    // попытка распарсить json, если есть
-    return res.text().then(text => {
-      try { return JSON.parse(text); } catch(e){ return {raw: text}; }
-    });
-  })
-  .then(data => {
-    el.style.opacity = "";
-    el.style.pointerEvents = "";
+  .then(res=>res.json())
+  .then(data=>{
 
-    console.log("favorite response:", data);
-
-    if(data && data.error){
-      console.warn("Favorite error:", data.error);
-      return;
-    }
-
-    // некоторые варианты ответа: {message: "Added"} / {message: "Removed"}
-    const msg = (data && data.message) ? String(data.message).toLowerCase() : "";
-
-    if(msg.includes("add")){
+    if(data.message === "Added"){
       el.classList.add("active");
       createHearts();
-    } else if(msg.includes("remov")){
+    }else{
       el.classList.remove("active");
-    } else {
-      // на всякий случай — переключаем
-      el.classList.toggle("active");
     }
-  })
-  .catch(err => {
-    console.error("toggleFavorite failed:", err);
-    el.style.opacity = "";
-    el.style.pointerEvents = "";
+
   });
+
 }
   
 function loadBanners(){
@@ -834,26 +794,20 @@ function switchTab(tab){
 
 function loadFavorites(){
 
-  const tg = telegramId || Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  fetch(API_BASE+`/favorites?telegram_id=${telegramId}`)
+  .then(res=>res.json())
+  .then(data=>{
 
-  fetch(API_BASE + "/favorites",{
-    headers:{
-      "telegram-id": tg
-    }
-  })
-  .then(res => res.json())
-  .then(data => {
+    const container=document.getElementById("favoritesContainer");
+    container.innerHTML="";
 
-    const container = document.getElementById("favoritesContainer");
-    container.innerHTML = "";
-
-    if(!data || data.length === 0){
-      container.innerHTML = "<p style='opacity:.6'>Пока ничего нет</p>";
+    if(!data || data.length===0){
+      container.innerHTML="<p style='opacity:.6'>Пока ничего нет</p>";
       return;
     }
 
     data.forEach(place=>{
-      container.innerHTML += `
+      container.innerHTML+=`
       <div class="card show">
         <div class="rating neutral">${place.rating||0}°</div>
         <div class="img-wrapper">
@@ -862,8 +816,6 @@ function loadFavorites(){
         </div>
         <div class="card-content">
           <h3>${place.name}</h3>
-          <p>💰 ${place.average_price||"-"} ₽</p>
-          <p>⏰ ${place.work_time||"-"}</p>
         </div>
       </div>`;
     });
@@ -871,7 +823,7 @@ function loadFavorites(){
   });
 
 }
-
+  
 document.getElementById("searchInput").addEventListener("input", function(){
   clearTimeout(searchTimeout);
 
