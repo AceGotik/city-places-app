@@ -388,7 +388,7 @@ Telegram.WebApp.ready();
 
 const API_BASE="https://city-places-app-production.up.railway.app";
 const telegramId=Telegram.WebApp.initDataUnsafe?.user?.id; 
-
+console.log("TELEGRAM ID:", telegramId);
 let previewMap, fullMap, previewMarkers, fullMarkers;
 let allPlaces = [];
 let activeCategory = "all";
