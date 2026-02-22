@@ -653,17 +653,16 @@ setTimeout(()=>{
 }
 
 function vote(id,value){
-fetch(API_BASE+`/places/${id}/vote?value=`+value,{
-method:"POST",
-headers:{"telegram_id":telegramId}
-}).then(()=>loadPlaces());
+  fetch(API_BASE+`/places/${id}/vote?value=${value}&telegram_id=${telegramId}`,{
+    method:"POST"
+  })
+  .then(()=>loadPlaces());
 }
 
 function toggleFavorite(id,el){
 
-  fetch(API_BASE+`/places/${id}/favorite`,{
-    method:"POST",
-    headers:{"telegram_id":telegramId}
+  fetch(API_BASE+`/places/${id}/favorite?telegram_id=${telegramId}`,{
+    method:"POST"
   })
   .then(res=>res.json())
   .then(data=>{
@@ -788,29 +787,25 @@ function switchTab(tab){
 
 function loadFavorites(){
 
-  fetch(API_BASE + "/favorites",{
-    headers:{"telegram_id":telegramId}
-  })
-  .then(res=>res.json())
-  .then(data=>{
+  fetch(API_BASE + `/favorites?telegram_id=${telegramId}`)
+  .then(res => res.json())
+  .then(data => {
 
-  const container = document.getElementById("favoritesContainer");
+    const container = document.getElementById("favoritesContainer");
+    container.innerHTML = "";
 
-container.innerHTML = `
-  <div style="font-size:12px;opacity:.7;word-break:break-all;">
-    ${JSON.stringify(data)}
-  </div>
-`;
-
-return;
+    if(data.length === 0){
+      container.innerHTML = "<p style='opacity:.6'>Пока ничего нет</p>";
+      return;
+    }
 
     data.forEach(place=>{
 
       let emoji="📍";
-      if(place.type === 1) emoji="🍸";
-      if(place.type === 2) emoji="☕";
-      if(place.type === 3) emoji="🍽";
-      if(place.type === 4) emoji="🍔";
+      if(place.type == 1) emoji="🍸";
+      if(place.type == 2) emoji="☕";
+      if(place.type == 3) emoji="🍽";
+      if(place.type == 4) emoji="🍔";
 
       let ratingClass="neutral";
       if(place.rating>0) ratingClass="positive";
