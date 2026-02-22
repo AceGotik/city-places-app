@@ -329,7 +329,7 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 <div id="map"></div>
 
 <div class="search">
-<input type="text" placeholder="Поиск заведения...">
+<input type="text" id="searchInput" placeholder="Поиск заведения...">
 </div>
 
 <div class="categories">
@@ -382,6 +382,8 @@ let previewMap, fullMap, previewMarkers, fullMarkers;
 let allPlaces = [];
 let activeCategory = "all";
 let activeFilter = "all";
+let searchQuery = "";
+let userLocation = null;
 
 function isNew(createdAt){
   const now = new Date();
@@ -471,7 +473,13 @@ if(activeFilter === "new"){
   data = data.filter(p => p.created_at && isNew(p.created_at));
 }
 
-
+// 🔎 ПОИСК
+if(searchQuery){
+  data = data.filter(p =>
+    p.name && p.name.toLowerCase().includes(searchQuery)
+  );
+}
+  
 // 🔹 СОРТИРОВКА "ПОПУЛЯРНЫЕ"
 if(activeFilter === "popular"){
   data = data.sort((a,b)=> (b.rating||0) - (a.rating||0));
@@ -799,6 +807,11 @@ L.marker([place.latitude,place.longitude],{icon})
 });
 });
 }
+
+document.getElementById("searchInput").addEventListener("input", function(){
+  searchQuery = this.value.toLowerCase();
+  renderPlaces();
+});
   
 initPreviewMap();
 loadPlaces();
