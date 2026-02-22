@@ -254,6 +254,7 @@ def vote(
 
 @app.post("/places/{place_id}/favorite")
 def toggle_favorite(
+    print("TELEGRAM ID:", telegram_id)
     place_id: int,
     telegram_id: int = Query(None),
     db: Session = Depends(get_db)
