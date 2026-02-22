@@ -653,31 +653,23 @@ setTimeout(()=>{
 }
 
 function vote(id,value){
-  fetch(API_BASE+`/places/${id}/vote?value=${value}`,{
-    method:"POST",
-    headers:{
-      "telegram-id": telegramId
-    }
+  fetch(API_BASE+`/places/${id}/vote?value=${value}&telegram_id=${telegramId}`,{
+    method:"POST"
   })
   .then(()=>loadPlaces());
 }
 
 function toggleFavorite(id,el){
 
-  fetch(API_BASE + `/places/${id}/favorite`,{
-    method:"POST",
-    headers:{
-      "telegram-id": telegramId
-    }
+  fetch(API_BASE + `/places/${id}/favorite?telegram_id=${telegramId}`,{
+    method:"POST"
   })
   .then(()=>{
-
     el.classList.toggle("active");
 
     if(el.classList.contains("active")){
       createHearts();
     }
-
   });
 }
 
@@ -797,11 +789,7 @@ function switchTab(tab){
 
 function loadFavorites(){
 
-  fetch(API_BASE + "/favorites",{
-    headers:{
-      "telegram-id": telegramId
-    }
-  })
+  fetch(API_BASE + `/favorites?telegram_id=${telegramId}`)
   .then(res => res.json())
   .then(data => {
 
