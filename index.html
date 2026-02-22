@@ -394,6 +394,7 @@ let activeCategory = "all";
 let activeFilter = "all";
 let searchQuery = "";
 let userLocation = null;
+let searchTimeout;
 
 function isNew(createdAt){
   const now = new Date();
@@ -411,6 +412,16 @@ function getUserLocation(){
         lat: pos.coords.latitude,
         lng: pos.coords.longitude
       };
+      navigator.geolocation.getCurrentPosition(pos=>{
+  userLocation = {
+    lat: pos.coords.latitude,
+    lng: pos.coords.longitude
+  };
+
+  if(activeFilter === "near"){
+    renderPlaces();
+  }
+});
     });
   }
 }
@@ -492,8 +503,17 @@ let data = [...allPlaces];
 const newBtn = document.getElementById("newFilter");
 
 const container = document.getElementById("placesContainer");
+
+// Плавно скрываем
 container.style.opacity = 0;
-container.innerHTML = "";
+
+setTimeout(()=>{
+  container.innerHTML = "";
+  renderCards(data);
+  container.style.opacity = 1;
+}, 150);
+
+return; // важно
   
 let newPlaces = allPlaces.filter(p => p.created_at && isNew(p.created_at));
 
@@ -639,6 +659,24 @@ setTimeout(()=>{
     }, index * 50); // карточки появляются по очереди
   });
 },10);
+
+}
+
+function renderCards(data){
+
+  const container = document.getElementById("placesContainer");
+
+  data.forEach(place=>{
+    // сюда твой существующий код создания карточек
+  });
+
+  setTimeout(()=>{
+    document.querySelectorAll(".card").forEach((card, index)=>{
+      setTimeout(()=>{
+        card.classList.add("show");
+      }, index * 40);
+    });
+  },10);
 
 }
 
@@ -874,8 +912,12 @@ L.marker([place.latitude,place.longitude],{icon})
 }
 
 document.getElementById("searchInput").addEventListener("input", function(){
-  searchQuery = this.value.toLowerCase();
-  renderPlaces();
+  clearTimeout(searchTimeout);
+
+  searchTimeout = setTimeout(()=>{
+    searchQuery = this.value.toLowerCase();
+    renderPlaces();
+  }, 200);
 });
   
 initPreviewMap();
