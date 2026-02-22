@@ -666,13 +666,9 @@ function toggleFavorite(id,el){
   })
   .then(()=>{
     el.classList.toggle("active");
-
-    if(el.classList.contains("active")){
-      createHearts();
-    }
   });
 }
-
+  
 function loadBanners(){
 fetch(API_BASE + "/banners")
 .then(res => res.json())
