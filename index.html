@@ -171,7 +171,7 @@ border-radius:26px;
 overflow:hidden;
 position:relative;
 box-shadow:0 10px 40px rgba(0,0,0,0.6);
-transition:.25s ease;
+transition: opacity .25s ease, transform .25s ease;
 }
 
 .card:active{
@@ -481,6 +481,10 @@ let data = [...allPlaces];
 
 const newBtn = document.getElementById("newFilter");
 
+const container = document.getElementById("placesContainer");
+container.style.opacity = 0;
+container.innerHTML = "";
+  
 let newPlaces = allPlaces.filter(p => p.created_at && isNew(p.created_at));
 
 if(newPlaces.length > 0 && activeFilter !== "new"){
@@ -537,11 +541,6 @@ if(activeFilter === "popular"){
 if(previewMarkers){
   previewMarkers.clearLayers();
 }
-
-
-const container = document.getElementById("placesContainer");
-container.innerHTML = "";
-
 
 data.forEach(place=>{
 
@@ -622,6 +621,11 @@ container.innerHTML+=`
 </div>`;
 
 });
+
+setTimeout(()=>{
+  container.style.opacity = 1;
+},50);
+
 }
 
 function vote(id,value){
