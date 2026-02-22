@@ -1,7 +1,6 @@
 from sqlalchemy.orm import relationship
 from database import Base
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, BigInteger 
 from datetime import datetime
 
 class Banner(Base):
@@ -15,7 +14,7 @@ class Vote(Base):
     __tablename__ = "votes"
 
     id = Column(Integer, primary_key=True)
-    telegram_id = Column(Integer, index=True)
+    telegram_id = Column(BigInteger, unique=True, index=True)
     place_id = Column(Integer, ForeignKey("places.id"))
     value = Column(Integer)  # 1 или -1
     
@@ -23,7 +22,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    telegram_id = Column(Integer, unique=True, index=True)
+    telegram_id = Column(BigInteger, unique=True, index=True)
 
 
 class Place(Base):
