@@ -793,7 +793,7 @@ function switchTab(tab){
 
 function loadFavorites(){
 
-  fetch(API_BASE + `/favorites`,{
+  fetch(API_BASE + "/favorites",{
     headers:{
       "telegram-id": telegramId
     }
@@ -804,7 +804,7 @@ function loadFavorites(){
     const container = document.getElementById("favoritesContainer");
     container.innerHTML = "";
 
-    if(data.length === 0){
+    if(!data || data.length === 0){
       container.innerHTML = "<p style='opacity:.6'>Пока ничего нет</p>";
       return;
     }
@@ -822,7 +822,7 @@ function loadFavorites(){
       if(place.rating<0) ratingClass="negative";
 
       container.innerHTML+=`
-      <div class="card">
+      <div class="card show">
         <div class="rating ${ratingClass}">${place.rating||0}°</div>
 
         <div class="img-wrapper">
@@ -833,7 +833,6 @@ function loadFavorites(){
         <div class="card-content">
           <h3>${place.name}</h3>
           <p>💰 ${place.average_price||"-"} ₽</p>
-          <p>🏷 ${emoji}</p>
           <p>⏰ ${place.work_time||"-"}</p>
         </div>
       </div>`;
@@ -841,6 +840,7 @@ function loadFavorites(){
 
   });
 }
+
 document.getElementById("searchInput").addEventListener("input", function(){
   clearTimeout(searchTimeout);
 
