@@ -646,25 +646,48 @@ setTimeout(()=>{
 
 }
 
-function vote(id,value){
-  fetch(API_BASE+`/places/${id}/vote?value=${value}&telegram_id=${telegramId}`,{
-    method:"POST"
+function vote(id, value){
+
+  if(!telegramId){
+    console.log("No telegram ID");
+    return;
+  }
+
+  fetch(API_BASE + `/places/${id}/vote?value=${value}`,{
+    method: "POST",
+    headers: {
+      "telegram-id": telegramId
+    }
   })
-  .then(()=>loadPlaces());
+  .then(res => res.json())
+  .then(() => {
+    loadPlaces();
+  })
+  .catch(err => {
+    console.log("Vote error:", err);
+  });
 }
 
 function toggleFavorite(id, el){
-  fetch(API_BASE+`/places/${id}/favorite?telegram_id=${telegramId}`,{
-    method:"POST"
+
+  if(!telegramId) return;
+
+  fetch(API_BASE + `/places/${id}/favorite`,{
+    method:"POST",
+    headers:{
+      "telegram-id": telegramId
+    }
   })
-  .then(res=>res.json())
-  .then(data=>{
+  .then(res => res.json())
+  .then(data => {
+
     if(data.message === "Added"){
       el.classList.add("active");
       createHearts();
-    }else{
+    }else if(data.message === "Removed"){
       el.classList.remove("active");
     }
+
   });
 }
   
