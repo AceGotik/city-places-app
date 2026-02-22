@@ -113,7 +113,7 @@ def get_places(db: Session = Depends(get_db)):
 
 @app.get("/places_with_vote")
 def get_places_with_vote(
-    telegram_id: int = Header(None),
+    telegram_id: int = Query(None),
     db: Session = Depends(get_db)
 ):
     places = db.query(Place).all()
