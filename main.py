@@ -208,7 +208,7 @@ def delete_place(
 # =============================
 
 @app.post("/places/{place_id}/vote")
-def def vote(
+def vote(
     place_id: int,
     value: int,
     telegram_id: int = Query(None),
