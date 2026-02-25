@@ -535,7 +535,11 @@ setTimeout(()=>heart.remove(),1000);
 }
 
 function loadPlaces(){
-  fetch(API_BASE+`/places_with_vote?telegram_id=${telegramId}`)
+  fetch(API_BASE + "/places_with_vote", {
+    headers: {
+      "telegram-id": telegramId
+    }
+  })
   .then(res=>res.json())
   .then(data=>{
     allPlaces = data;
@@ -1052,15 +1056,15 @@ function toggleVisit(id){
     }
   })
   .then(res => res.json())
-  .then(data => {
+  .then(() => {
 
-    console.log("Visit response:", data);
-
-    // обновляем список мест
-    loadPlaces();
-
-    // заново открываем карточку
-    openPlace(id);
+    // ждём обновления мест
+    fetch(API_BASE + `/places_with_vote?telegram_id=${telegramId}`)
+      .then(res => res.json())
+      .then(data => {
+        allPlaces = data;
+        openPlace(id);   // теперь откроется с новыми данными
+      });
 
   })
   .catch(err => {
