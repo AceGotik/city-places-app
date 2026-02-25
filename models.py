@@ -56,3 +56,12 @@ class Visited(Base):
     telegram_id = Column(BigInteger)
     place_id = Column(Integer, ForeignKey("places.id"))
     
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(Integer, primary_key=True)
+    telegram_id = Column(BigInteger)
+    place_id = Column(Integer, ForeignKey("places.id"))
+    text = Column(Text)
+    recommendation = Column(String)  # positive / negative / neutral
+    created_at = Column(DateTime, default=datetime.utcnow)
