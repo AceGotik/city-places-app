@@ -360,7 +360,26 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 </div>
 <!-- КОНЕЦ ГЛАВНОГО -->
 
+<div id="profileTab" class="screen">
+  <div style="padding:20px">
 
+    <div style="text-align:center;margin-bottom:20px;">
+      <img id="profileAvatar"
+           style="width:110px;
+                  height:110px;
+                  border-radius:50%;
+                  object-fit:cover;
+                  box-shadow:0 0 25px rgba(0,0,0,0.6);">
+
+      <h2 id="profileName" style="margin-top:12px;"></h2>
+      <p id="profileUsername" style="opacity:.6;margin-top:-8px;"></p>
+    </div>
+
+    <div id="profileContent"></div>
+
+  </div>
+</div>
+  
 <!-- ВКЛАДКА КАРТЫ -->
 <div id="mapTab" class="screen">
 <div id="fullMapTab" style="height:100vh;"></div>
@@ -379,7 +398,7 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 <div class="nav-item active" onclick="switchTab('home')">🏠<br>Главная</div>
 <div class="nav-item" onclick="switchTab('map')">🗺<br>Карта</div>
 <div class="nav-item" onclick="switchTab('favorites')">❤️<br>Избранное</div>
-<div class="nav-item">👤<br>Профиль</div>
+<div class="nav-item" onclick="switchTab('profile')">👤<br>Профиль</div>
 </div>
   
 <script>
@@ -469,7 +488,36 @@ document.getElementById("map").onclick = () => {
   switchTab('map');
 };
 
+// Профиль
 
+ function loadProfile(){
+
+  const user = Telegram.WebApp.initDataUnsafe?.user;
+
+  if(!user){
+    console.log("No Telegram user data");
+    return;
+  }
+
+  // Имя
+  document.getElementById("profileName").innerText =
+    user.first_name + (user.last_name ? " " + user.last_name : "");
+
+  // Username
+  document.getElementById("profileUsername").innerText =
+    user.username ? "@" + user.username : "";
+
+  // Аватар
+  document.getElementById("profileAvatar").src =
+    user.photo_url || "https://via.placeholder.com/110";
+
+  // Контент
+  document.getElementById("profileContent").innerHTML =
+    "<p style='opacity:.6;text-align:center;'>Профиль пользователя</p>";
+} 
+  
+// Сердца
+  
 function createHearts(){
 for(let i=0;i<6;i++){
 let heart=document.createElement("div");
@@ -508,7 +556,7 @@ if(newPlaces.length > 0 && activeFilter !== "new"){
 }
   
 // 🔹 ФИЛЬТР ПО КАТЕГОРИИ
-// 🔹 ФИЛЬТР ПО КАТЕГОРИИ
+  
 if(activeCategory !== "all"){
   data = data.filter(p => parseInt(p.type) === activeCategory);
 }
@@ -844,6 +892,12 @@ function loadFavorites(){
     });
 
   });
+}
+
+if(tab === "profile"){
+  document.getElementById("profileTab").classList.add("active");
+  document.querySelectorAll(".nav-item")[3].classList.add("active");
+  loadProfile();
 }
   
 document.getElementById("searchInput").addEventListener("input", function(){
