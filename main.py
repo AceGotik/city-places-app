@@ -6,8 +6,9 @@ from sqlalchemy import func
 from pydantic import BaseModel
 from typing import Optional
 from database import engine, Base, SessionLocal
-from models import Place, User, Vote, Favorite, Banner
+from models import Place, User, Vote, Favorite, Banner, Visited
 from sqlalchemy import text
+from sqlalchemy import Column, Integer, BigInteger, ForeignKey
 
 app = FastAPI()
 
