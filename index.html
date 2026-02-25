@@ -825,6 +825,7 @@ function openPlace(id){
       <!-- REVIEWS -->
       <h3 style="margin-top:30px;">⭐ Отзывы</h3>
 
+
 <div style="margin-top:15px;">
 
   <!-- КНОПКИ РЕКОМЕНДАЦИИ -->
@@ -942,8 +943,10 @@ function submitReview(placeId){
     return;
   }
 
-  fetch(API_BASE + `/places/${placeId}/review?recommendation=${selectedRecommendation}&text=${encodeURIComponent(text)}`,{
-    method:"POST",
+  const user = Telegram.WebApp.initDataUnsafe.user;
+
+  fetch(API_BASE + `/places/${placeId}/review?recommendation=${selectedRecommendation}&text=${encodeURIComponent(text)}&username=${user.first_name}`,{
+    method: "POST",   // ← ВОТ ЭТО ОБЯЗАТЕЛЬНО
     headers:{
       "telegram-id": telegramId
     }
@@ -951,9 +954,9 @@ function submitReview(placeId){
   .then(res=>res.json())
   .then(data=>{
     document.getElementById("reviewText").value="";
-loadReviews(placeId);
+    loadReviews(placeId);
   });
-}  
+}
 
  function loadReviews(placeId){
 
@@ -986,18 +989,46 @@ loadReviews(placeId);
       }
 
       container.innerHTML += `
-        <div style="
-          background:${bg};
-          padding:12px;
-          border-radius:14px;
-          margin-bottom:10px;">
-          ${review.text}
-        </div>
-      `;
+  <div style="
+    background:${bg};
+    padding:12px;
+    border-radius:14px;
+    margin-bottom:10px;">
+
+    <div style="font-weight:bold; margin-bottom:6px;">
+      ${review.username || "Пользователь"}
+    </div>
+
+    <div>${review.text}</div>
+
+    ${review.is_mine ? `
+      <div style="
+        margin-top:8px;
+        font-size:13px;
+        color:#ff4d4d;
+        cursor:pointer;"
+        onclick="deleteReview(${review.id}, ${placeId})">
+        🗑 Удалить
+      </div>
+    ` : ""}
+
+  </div>
+`;
     });
 
   });
 } 
+
+function deleteReview(reviewId, placeId){
+
+  fetch(API_BASE + `/reviews/${reviewId}`,{
+    method:"DELETE",
+    headers:{
+      "telegram-id": telegramId
+    }
+  })
+  .then(()=>loadReviews(placeId));
+}
   
 function vote(id, value){
 
