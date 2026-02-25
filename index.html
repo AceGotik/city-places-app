@@ -877,6 +877,8 @@ function openPlace(id){
     Отправить отзыв
   </button>
 
+<div id="reviewsContainer" style="margin-top:20px;"></div>
+
 </div>
 
     </div>
@@ -900,6 +902,7 @@ function openPlace(id){
 
     },100);
   }
+  loadReviews(id);
 }
 
 let selectedRecommendation = "neutral";
@@ -947,10 +950,54 @@ function submitReview(placeId){
   })
   .then(res=>res.json())
   .then(data=>{
-    alert("Отзыв сохранён");
     document.getElementById("reviewText").value="";
+loadReviews(placeId);
   });
 }  
+
+ function loadReviews(placeId){
+
+  fetch(API_BASE + `/places/${placeId}/reviews`,{
+    headers:{
+      "telegram-id": telegramId
+    }
+  })
+  .then(res=>res.json())
+  .then(data=>{
+
+    const container = document.getElementById("reviewsContainer");
+    container.innerHTML = "";
+
+    if(!data || data.length === 0){
+      container.innerHTML = "<p style='opacity:.6;'>Пока нет отзывов</p>";
+      return;
+    }
+
+    data.forEach(review=>{
+
+      let bg = "rgba(255,255,255,0.05)";
+
+      if(review.recommendation === "positive"){
+        bg = "rgba(0,204,102,0.2)";
+      }
+
+      if(review.recommendation === "negative"){
+        bg = "rgba(255,77,77,0.2)";
+      }
+
+      container.innerHTML += `
+        <div style="
+          background:${bg};
+          padding:12px;
+          border-radius:14px;
+          margin-bottom:10px;">
+          ${review.text}
+        </div>
+      `;
+    });
+
+  });
+} 
   
 function vote(id, value){
 
