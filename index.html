@@ -774,17 +774,18 @@ function openPlace(id){
 
   <!-- Избранное -->
   <button
-    onclick="toggleDetailFavorite(${place.id})"
-    style="
-      flex:1;
-      padding:12px;
-      border-radius:16px;
-      border:none;
-      background:${place.is_favorite ? '#ff2d55' : 'rgba(255,255,255,0.1)'};
-      color:white;
-      font-size:15px;">
-    ${place.is_favorite ? "❤️ В избранном" : "❤️ В избранное"}
-  </button>
+  id="detailFavBtn"
+  onclick="toggleDetailFavorite(${place.id})"
+  style="
+    flex:1;
+    padding:12px;
+    border-radius:16px;
+    border:none;
+    background:${place.is_favorite ? '#ff2d55' : 'rgba(255,255,255,0.1)'};
+    color:white;
+    font-size:15px;">
+  ${place.is_favorite ? "❤️ В избранном" : "❤️ В избранное"}
+</button>
 
   <!-- Посетил -->
   <button
@@ -1058,17 +1059,17 @@ function toggleVisit(id){
   .then(res => res.json())
   .then(() => {
 
-    // ждём обновления мест
-    fetch(API_BASE + `/places_with_vote?telegram_id=${telegramId}`)
-      .then(res => res.json())
-      .then(data => {
-        allPlaces = data;
-        openPlace(id);   // теперь откроется с новыми данными
-      });
+    fetch(API_BASE + "/places_with_vote", {
+      headers: {
+        "telegram-id": telegramId
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      allPlaces = data;
+      openPlace(id);
+    });
 
-  })
-  .catch(err => {
-    console.log("Visit error:", err);
   });
 }
   
