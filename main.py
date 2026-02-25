@@ -492,3 +492,22 @@ def get_reviews(
         })
 
     return result
+
+@app.delete("/reviews/{review_id}")
+def delete_review(
+    review_id: int,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    review = db.query(Review).filter(
+        Review.id == review_id,
+        Review.telegram_id == telegram_id
+    ).first()
+
+    if not review:
+        return {"error": "Not allowed"}
+
+    db.delete(review)
+    db.commit()
+
+    return {"message": "Deleted"}
