@@ -82,6 +82,13 @@ class BannerSchema(BaseModel):
     link: Optional[str] = None
 
 
+class Visited(Base):
+    __tablename__ = "visited"
+
+    id = Column(Integer, primary_key=True)
+    telegram_id = Column(BigInteger)
+    place_id = Column(Integer, ForeignKey("places.id"))
+    
 # =============================
 # USER HELPER
 # =============================
@@ -313,6 +320,35 @@ def get_favorites(
         })
 
     return result
+
+@app.post("/places/{place_id}/visit")
+def mark_visited(
+    place_id: int,
+    telegram_id: int = Query(None),
+    db: Session = Depends(get_db)
+):
+    if telegram_id is None:
+        return {"error": "No telegram_id"}
+
+    existing = db.query(Visited).filter(
+        Visited.place_id == place_id,
+        Visited.telegram_id == telegram_id
+    ).first()
+
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"message": "Removed"}
+
+    new_visit = Visited(
+        place_id=place_id,
+        telegram_id=telegram_id
+    )
+    db.add(new_visit)
+    db.commit()
+
+    return {"message": "Added"}
+    
 # =============================
 # BANNERS
 # =============================
