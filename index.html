@@ -851,6 +851,12 @@ function switchTab(tab){
   loadFavorites();
 
   }
+
+  if(tab === "profile"){
+  document.getElementById("profileTab").classList.add("active");
+  document.querySelectorAll(".nav-item")[3].classList.add("active");
+  loadProfile();
+}
 }
 
 function loadFavorites(){
@@ -894,11 +900,7 @@ function loadFavorites(){
   });
 }
 
-if(tab === "profile"){
-  document.getElementById("profileTab").classList.add("active");
-  document.querySelectorAll(".nav-item")[3].classList.add("active");
-  loadProfile();
-}
+
   
 document.getElementById("searchInput").addEventListener("input", function(){
   clearTimeout(searchTimeout);
