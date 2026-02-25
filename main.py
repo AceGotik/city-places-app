@@ -125,7 +125,8 @@ def get_places_with_vote(
 
         user_vote = 0
         is_visited = False
-
+        is_favorite = False
+        
         if telegram_id:
 
             vote = db.query(Vote).filter(
@@ -143,6 +144,13 @@ def get_places_with_vote(
 
             if visited:
                 is_visited = True
+                favorite = db.query(Favorite).join(User).filter(
+                    Favorite.place_id == place.id,
+                    User.telegram_id == telegram_id
+                ).first()
+                
+            if favorite:
+                is_favorite = True
 
         result.append({
             "id": place.id,
@@ -157,6 +165,7 @@ def get_places_with_vote(
             "longitude": place.longitude,
             "user_vote": user_vote,
             "is_visited": is_visited,
+            "is_favorite": is_favorite,
             "created_at": place.created_at
         })
 
