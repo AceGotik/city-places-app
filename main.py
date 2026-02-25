@@ -115,16 +115,19 @@ def get_places(db: Session = Depends(get_db)):
 
 @app.get("/places_with_vote")
 def get_places_with_vote(
-    telegram_id: int = Query(None),
+    telegram_id: int = Header(None),
     db: Session = Depends(get_db)
 ):
     places = db.query(Place).all()
-
     result = []
+
     for place in places:
+
         user_vote = 0
+        is_visited = False
 
         if telegram_id:
+
             vote = db.query(Vote).filter(
                 Vote.place_id == place.id,
                 Vote.telegram_id == telegram_id
@@ -132,6 +135,14 @@ def get_places_with_vote(
 
             if vote:
                 user_vote = vote.value
+
+            visited = db.query(Visited).filter(
+                Visited.place_id == place.id,
+                Visited.telegram_id == telegram_id
+            ).first()
+
+            if visited:
+                is_visited = True
 
         result.append({
             "id": place.id,
@@ -145,6 +156,7 @@ def get_places_with_vote(
             "latitude": place.latitude,
             "longitude": place.longitude,
             "user_vote": user_vote,
+            "is_visited": is_visited,
             "created_at": place.created_at
         })
 
@@ -319,7 +331,7 @@ def get_favorites(
 @app.post("/places/{place_id}/visit")
 def mark_visited(
     place_id: int,
-    telegram_id: int = Query(None),
+    telegram_id: int = Header(None),
     db: Session = Depends(get_db)
 ):
     if telegram_id is None:
