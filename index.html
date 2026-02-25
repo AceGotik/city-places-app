@@ -766,15 +766,17 @@ function openPlace(id){
       <!-- ACTION BUTTONS -->
       <div style="display:flex; gap:12px; margin-bottom:20px;">
 
-        <button onclick="toggleFavorite(${place.id}, this)"
-                style="flex:1;
-                       padding:12px;
-                       border-radius:16px;
-                       border:none;
-                       background:#ff2d55;
-                       color:white;">
-          ❤️ В избранное
-        </button>
+        <button id="detailFavBtn"
+        onclick="toggleDetailFavorite(${place.id})"
+        style="
+          flex:1;
+          padding:12px;
+          border-radius:16px;
+          border:none;
+          background:#ff2d55;
+          color:white;">
+  ❤️ В избранное
+</button>
 
         <button onclick="markVisited(${place.id})"
                 style="flex:1;
@@ -874,6 +876,35 @@ function toggleFavorite(id, el){
       createHearts();
     }else if(data.message === "Removed"){
       el.classList.remove("active");
+    }
+
+  });
+}
+
+function toggleDetailFavorite(id){
+
+  if(!telegramId) return;
+
+  fetch(API_BASE + `/places/${id}/favorite`,{
+    method:"POST",
+    headers:{
+      "telegram-id": telegramId
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    const btn = document.getElementById("detailFavBtn");
+
+    if(data.message === "Added"){
+      btn.innerText = "❤️ В избранном";
+      btn.style.background = "#00cc66";
+      createHearts();
+    }
+
+    if(data.message === "Removed"){
+      btn.innerText = "❤️ В избранное";
+      btn.style.background = "#ff2d55";
     }
 
   });
