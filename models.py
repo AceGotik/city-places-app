@@ -48,3 +48,11 @@ class Favorite(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     place_id = Column(Integer, ForeignKey("places.id"))
+
+class Visited(Base):
+    __tablename__ = "visited"
+
+    id = Column(Integer, primary_key=True)
+    telegram_id = Column(BigInteger)
+    place_id = Column(Integer, ForeignKey("places.id"))
+    
