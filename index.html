@@ -378,11 +378,10 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
     <div id="profileContent"></div>
 
   </div>
+</div>
 
 <div id="placeDetailTab" class="screen">
   <div id="placeDetailContent"></div>
-</div>
-  
 </div>
   
 <!-- ВКЛАДКА КАРТЫ -->
@@ -665,7 +664,10 @@ let downActive=place.user_vote===-1?"active-down":"";
 container.innerHTML+=`
 <div class="card" onclick="openPlace(${place.id})">
 <div class="rating ${ratingClass}">${place.rating||0}°</div>
-<div class="favorite" onclick="toggleFavorite(${place.id},this)">❤️</div>
+<div class="favorite" 
+     onclick="event.stopPropagation(); toggleFavorite(${place.id},this)">
+  ❤️
+</div>
 
 <div class="img-wrapper">
 <img src="${place.image||''}">
