@@ -824,7 +824,60 @@ function openPlace(id){
 
       <!-- REVIEWS -->
       <h3 style="margin-top:30px;">⭐ Отзывы</h3>
-      <p style="opacity:.6;">Отзывы появятся позже</p>
+
+<div style="margin-top:15px;">
+
+  <!-- КНОПКИ РЕКОМЕНДАЦИИ -->
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <button onclick="selectRecommendation('positive')" 
+      class="rec-btn"
+      id="rec-positive"
+      style="flex:1; padding:8px; border-radius:10px; border:none;">
+      ✅ Рекомендую
+    </button>
+
+    <button onclick="selectRecommendation('neutral')" 
+      class="rec-btn"
+      id="rec-neutral"
+      style="flex:1; padding:8px; border-radius:10px; border:none;">
+      ➖ Нейтрально
+    </button>
+
+    <button onclick="selectRecommendation('negative')" 
+      class="rec-btn"
+      id="rec-negative"
+      style="flex:1; padding:8px; border-radius:10px; border:none;">
+      ❌ Не рекомендую
+    </button>
+  </div>
+
+  <!-- ТЕКСТ -->
+  <textarea id="reviewText"
+    placeholder="Напишите отзыв..."
+    style="
+      width:100%;
+      padding:10px;
+      border-radius:12px;
+      border:none;
+      resize:none;
+      min-height:80px;
+      margin-bottom:10px;
+      background:rgba(255,255,255,0.08);
+      color:white;"></textarea>
+
+  <!-- КНОПКА -->
+  <button onclick="submitReview(${place.id})"
+    style="
+      width:100%;
+      padding:10px;
+      border-radius:12px;
+      border:none;
+      background:#1d9bf0;
+      color:white;">
+    Отправить отзыв
+  </button>
+
+</div>
 
     </div>
 
@@ -848,6 +901,56 @@ function openPlace(id){
     },100);
   }
 }
+
+let selectedRecommendation = "neutral";
+
+function selectRecommendation(type){
+
+  selectedRecommendation = type;
+
+  document.querySelectorAll(".rec-btn").forEach(btn=>{
+    btn.style.background = "rgba(255,255,255,0.1)";
+  });
+
+  if(type === "positive"){
+    document.getElementById("rec-positive").style.background = "#00cc66";
+  }
+
+  if(type === "negative"){
+    document.getElementById("rec-negative").style.background = "#ff4d4d";
+  }
+
+  if(type === "neutral"){
+    document.getElementById("rec-neutral").style.background = "#666";
+  }
+}
+
+function submitReview(placeId){
+
+  if(!telegramId){
+    console.log("No telegram ID");
+    return;
+  }
+
+  const text = document.getElementById("reviewText").value;
+
+  if(!text){
+    alert("Напишите отзыв");
+    return;
+  }
+
+  fetch(API_BASE + `/places/${placeId}/review?recommendation=${selectedRecommendation}&text=${encodeURIComponent(text)}`,{
+    method:"POST",
+    headers:{
+      "telegram-id": telegramId
+    }
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    alert("Отзыв сохранён");
+    document.getElementById("reviewText").value="";
+  });
+}  
   
 function vote(id, value){
 
