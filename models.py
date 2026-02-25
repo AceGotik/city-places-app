@@ -65,3 +65,4 @@ class Review(Base):
     text = Column(Text)
     recommendation = Column(String)  # positive / negative / neutral
     created_at = Column(DateTime, default=datetime.utcnow)
+    username = Column(String)
