@@ -706,7 +706,6 @@ function openPlace(id){
   const place = allPlaces.find(p => p.id === id);
   if(!place) return;
 
-  // скрываем все экраны
   document.querySelectorAll(".screen")
     .forEach(s=>s.classList.remove("active"));
 
@@ -723,61 +722,102 @@ function openPlace(id){
 
   document.getElementById("placeDetailContent").innerHTML = `
   
-  <div style="padding:16px">
+  <div>
 
-    <button onclick="switchTab('home')" 
-            style="margin-bottom:15px;
-                   background:none;
-                   border:none;
-                   color:#4da3ff;
-                   font-size:16px;">
-      ← Назад
-    </button>
+    <!-- HEADER -->
+    <div style="position:relative;">
 
-    <!-- Галерея -->
-    <div style="margin-bottom:20px;">
       <img src="${place.image || ''}" 
            style="width:100%;
-                  height:250px;
-                  object-fit:cover;
-                  border-radius:20px;">
+                  height:280px;
+                  object-fit:cover;">
+
+      <div style="
+          position:absolute;
+          bottom:0;
+          left:0;
+          width:100%;
+          padding:20px;
+          background:linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+      ">
+        <h2 style="margin:0;">${place.name}</h2>
+        <p style="margin:5px 0 0 0; opacity:.8;">
+          ⭐ ${place.rating || 0}°
+        </p>
+      </div>
+
+      <button onclick="switchTab('home')" 
+              style="
+                position:absolute;
+                top:20px;
+                left:15px;
+                background:rgba(0,0,0,0.6);
+                border:none;
+                padding:8px 12px;
+                border-radius:12px;
+                color:white;">
+        ←
+      </button>
+
     </div>
 
-    <!-- Название -->
-    <h2>${place.name}</h2>
-    <p style="opacity:.7;">Рейтинг: ${place.rating || 0}°</p>
+    <div style="padding:16px">
 
-    <!-- Информация -->
-    <div style="margin-top:15px;">
-      <p>📍 ${place.street || "-"}</p>
-      <p>⏰ ${place.work_time || "-"}</p>
-      <p>💰 ${place.average_price || "-"} ₽</p>
-      <p>🏷 ${typeText}</p>
+      <!-- ACTION BUTTONS -->
+      <div style="display:flex; gap:12px; margin-bottom:20px;">
+
+        <button onclick="toggleFavorite(${place.id}, this)"
+                style="flex:1;
+                       padding:12px;
+                       border-radius:16px;
+                       border:none;
+                       background:#ff2d55;
+                       color:white;">
+          ❤️ В избранное
+        </button>
+
+        <button onclick="markVisited(${place.id})"
+                style="flex:1;
+                       padding:12px;
+                       border-radius:16px;
+                       border:none;
+                       background:#1d9bf0;
+                       color:white;">
+          ✔ Я посетил
+        </button>
+
+      </div>
+
+      <!-- INFO -->
+      <div>
+        <p>📍 ${place.street || "-"}</p>
+        <p>⏰ ${place.work_time || "-"}</p>
+        <p>💰 ${place.average_price || "-"} ₽</p>
+        <p>🏷 ${typeText}</p>
+      </div>
+
+      <!-- MAP -->
+      <div id="detailMap"
+           style="height:220px;
+                  border-radius:20px;
+                  margin-top:20px;">
+      </div>
+
+      <!-- MENU -->
+      <h3 style="margin-top:30px;">📋 Фото меню</h3>
+      <p style="opacity:.6;">Пока нет фото меню</p>
+
+      <!-- REVIEWS -->
+      <h3 style="margin-top:30px;">⭐ Отзывы</h3>
+      <p style="opacity:.6;">Отзывы появятся позже</p>
+
     </div>
-
-    <!-- Карта -->
-    <div id="detailMap" 
-         style="height:200px;
-                border-radius:20px;
-                margin-top:20px;">
-    </div>
-
-    <!-- Фото меню -->
-    <h3 style="margin-top:30px;">📋 Фото меню</h3>
-    <p style="opacity:.6;">Пока нет фото меню</p>
-
-    <!-- Отзывы -->
-    <h3 style="margin-top:30px;">⭐ Отзывы</h3>
-    <p style="opacity:.6;">Отзывы появятся позже</p>
 
   </div>
   `;
 
-  // Инициализация карты
   if(place.latitude && place.longitude){
-
     setTimeout(()=>{
-
       const map = L.map('detailMap',{
         zoomControl:false,
         attributionControl:false
@@ -790,11 +830,9 @@ function openPlace(id){
 
       L.marker([place.latitude, place.longitude]).addTo(map);
 
-    }, 100);
-
+    },100);
   }
 }
-
   
 function vote(id, value){
 
