@@ -437,6 +437,7 @@ def add_review(
     place_id: int,
     recommendation: str,
     text: str,
+    username: str = Query(None),
     telegram_id: int = Header(None),
     db: Session = Depends(get_db)
 ):
@@ -458,6 +459,7 @@ def add_review(
     new_review = Review(
         place_id=place_id,
         telegram_id=telegram_id,
+        username=username,
         text=text,
         recommendation=recommendation
     )
