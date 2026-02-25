@@ -83,13 +83,7 @@ class BannerSchema(BaseModel):
     link: Optional[str] = None
 
 
-class Visited(Base):
-    __tablename__ = "visited"
 
-    id = Column(Integer, primary_key=True)
-    telegram_id = Column(BigInteger)
-    place_id = Column(Integer, ForeignKey("places.id"))
-    
 # =============================
 # USER HELPER
 # =============================
