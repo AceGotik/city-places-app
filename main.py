@@ -9,6 +9,7 @@ from database import engine, Base, SessionLocal
 from models import Place, User, Vote, Favorite, Banner, Visited
 from sqlalchemy import text
 from sqlalchemy import Column, Integer, BigInteger, ForeignKey
+from models import Review
 
 app = FastAPI()
 
@@ -431,3 +432,61 @@ def delete_banner(
     return {"message": "Удалено"}
 
 
+@app.post("/places/{place_id}/review")
+def add_review(
+    place_id: int,
+    recommendation: str,
+    text: str,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    if telegram_id is None:
+        return {"error": "No telegram_id"}
+
+    # Один отзыв на пользователя
+    existing = db.query(Review).filter(
+        Review.place_id == place_id,
+        Review.telegram_id == telegram_id
+    ).first()
+
+    if existing:
+        existing.text = text
+        existing.recommendation = recommendation
+        db.commit()
+        return {"message": "Updated"}
+
+    new_review = Review(
+        place_id=place_id,
+        telegram_id=telegram_id,
+        text=text,
+        recommendation=recommendation
+    )
+
+    db.add(new_review)
+    db.commit()
+
+    return {"message": "Added"}
+
+@app.get("/places/{place_id}/reviews")
+def get_reviews(
+    place_id: int,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    reviews = db.query(Review).filter(
+        Review.place_id == place_id
+    ).order_by(Review.created_at.desc()).all()
+
+    result = []
+
+    for r in reviews:
+        result.append({
+            "id": r.id,
+            "text": r.text,
+            "recommendation": r.recommendation,
+            "telegram_id": r.telegram_id,
+            "created_at": r.created_at,
+            "is_mine": r.telegram_id == telegram_id
+        })
+
+    return result
