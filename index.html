@@ -766,31 +766,37 @@ function openPlace(id){
     <div style="padding:16px">
 
       <!-- ACTION BUTTONS -->
-      <div style="display:flex; gap:12px; margin-bottom:20px;">
+<div style="display:flex; gap:12px; margin-bottom:20px;">
 
-        <button id="detailFavBtn"
-        onclick="toggleDetailFavorite(${place.id})"
-        style="
-          flex:1;
-          padding:12px;
-          border-radius:16px;
-          border:none;
-          background:#ff2d55;
-          color:white;">
-  ❤️ В избранное
-</button>
+  <!-- Избранное -->
+  <button
+    onclick="toggleDetailFavorite(${place.id})"
+    style="
+      flex:1;
+      padding:12px;
+      border-radius:16px;
+      border:none;
+      background:${place.is_favorite ? '#ff2d55' : 'rgba(255,255,255,0.1)'};
+      color:white;
+      font-size:15px;">
+    ${place.is_favorite ? "❤️ В избранном" : "❤️ В избранное"}
+  </button>
 
-        <button onclick="markVisited(${place.id})"
-                style="flex:1;
-                       padding:12px;
-                       border-radius:16px;
-                       border:none;
-                       background:#1d9bf0;
-                       color:white;">
-          ✔ Я посетил
-        </button>
+  <!-- Посетил -->
+  <button
+    onclick="toggleVisit(${place.id})"
+    style="
+      flex:1;
+      padding:12px;
+      border-radius:16px;
+      border:none;
+      background:${place.is_visited ? '#00cc66' : 'rgba(255,255,255,0.1)'};
+      color:white;
+      font-size:15px;">
+    ${place.is_visited ? "✔ Вы посетили" : "✔ Я посетил"}
+  </button>
 
-      </div>
+</div>
 
       <!-- INFO -->
       <div>
@@ -1032,6 +1038,36 @@ function switchTab(tab){
 }
 }
 
+function toggleVisit(id){
+
+  if(!telegramId){
+    console.log("No telegram ID");
+    return;
+  }
+
+  fetch(API_BASE + `/places/${id}/visit`,{
+    method: "POST",
+    headers: {
+      "telegram-id": telegramId
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    console.log("Visit response:", data);
+
+    // обновляем список мест
+    loadPlaces();
+
+    // заново открываем карточку
+    openPlace(id);
+
+  })
+  .catch(err => {
+    console.log("Visit error:", err);
+  });
+}
+  
 function markVisited(id){
 
   fetch(API_BASE+`/places/${id}/visit?telegram_id=${telegramId}`,{
