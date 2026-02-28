@@ -543,3 +543,36 @@ def toggle_review_like(
     db.commit()
 
     return {"message": "Added"}
+
+
+
+@app.post("/places/{place_id}/menu_photo")
+def add_menu_photo(
+    place_id: int,
+    image: str,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    if telegram_id is None:
+        return {"error": "No telegram_id"}
+
+    photo = MenuPhoto(
+        place_id=place_id,
+        image=image
+    )
+
+    db.add(photo)
+    db.commit()
+
+    return {"message": "Added"}
+
+@app.get("/places/{place_id}/menu_photos")
+def get_menu_photos(
+    place_id: int,
+    db: Session = Depends(get_db)
+):
+    photos = db.query(MenuPhoto).filter(
+        MenuPhoto.place_id == place_id
+    ).all()
+
+    return photos
