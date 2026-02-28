@@ -73,3 +73,11 @@ class ReviewLike(Base):
     id = Column(Integer, primary_key=True)
     review_id = Column(Integer, ForeignKey("reviews.id"))
     telegram_id = Column(BigInteger)
+
+class MenuPhoto(Base):
+    __tablename__ = "menu_photos"
+
+    id = Column(Integer, primary_key=True)
+    place_id = Column(Integer, ForeignKey("places.id"))
+    image = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
