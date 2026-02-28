@@ -11,6 +11,7 @@ from sqlalchemy import text
 from sqlalchemy import Column, Integer, BigInteger, ForeignKey
 from models import Review
 from models import ReviewLike
+from models import MenuPhoto
 
 app = FastAPI()
 
@@ -483,17 +484,31 @@ def get_reviews(
     result = []
 
     for r in reviews:
+
+        # 🔹 считаем лайки
+        likes_count = db.query(ReviewLike).filter(
+            ReviewLike.review_id == r.id
+        ).count()
+
+        # 🔹 проверяем лайкнул ли пользователь
+        user_liked = False
+        if telegram_id:
+            user_liked = db.query(ReviewLike).filter(
+                ReviewLike.review_id == r.id,
+                ReviewLike.telegram_id == telegram_id
+            ).first() is not None
+
         result.append({
-    "id": r.id,
-    "text": r.text,
-    "recommendation": r.recommendation,
-    "username": r.username,   # ← ВОТ ЭТО ДОБАВИТЬ
-    "telegram_id": r.telegram_id,
-    "created_at": r.created_at,
-    "is_mine": r.telegram_id == telegram_id,
-    "likes": likes_count,
-    "user_liked": user_liked
-})
+            "id": r.id,
+            "text": r.text,
+            "recommendation": r.recommendation,
+            "username": r.username,
+            "telegram_id": r.telegram_id,
+            "created_at": r.created_at,
+            "is_mine": r.telegram_id == telegram_id,
+            "likes": likes_count,
+            "user_liked": user_liked
+        })
 
     return result
 
