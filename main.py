@@ -193,6 +193,17 @@ def get_places_with_vote(
             if visited:
                 is_visited = True
 
+
+        # 🔥 ДОБАВЛЯЕМ ФОТО
+        place_photos = db.query(PlacePhoto).filter(
+            PlacePhoto.place_id == place.id
+        ).all()
+
+        menu_photos = db.query(MenuPhoto).filter(
+            MenuPhoto.place_id == place.id
+        ).all()
+
+
         result.append({
             "id": place.id,
             "name": place.name,
@@ -207,11 +218,20 @@ def get_places_with_vote(
             "user_vote": user_vote,
             "is_favorite": is_favorite,
             "is_visited": is_visited,
-            "created_at": place.created_at
+            "created_at": place.created_at,
+
+            # 🔥 ВОТ ЭТО ГЛАВНОЕ
+            "photos": [
+                {"id": p.id, "image": p.image}
+                for p in place_photos
+            ],
+            "menu": [
+                {"id": m.id, "image": m.image}
+                for m in menu_photos
+            ]
         })
 
     return result
-
 
 @app.post("/places")
 def create_place(place: PlaceSchema, db: Session = Depends(get_db)):
