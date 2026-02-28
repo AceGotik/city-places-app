@@ -68,6 +68,52 @@ padding-bottom:140px;
   object-fit:cover;
   cursor:pointer;
 }
+
+.lightbox{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.96);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:9999;
+  animation:fadeIn 0.25s ease;
+}
+
+.lightbox img{
+  max-width:95%;
+  max-height:80%;
+  border-radius:16px;
+  transition:transform 0.3s ease;
+}
+
+.lightbox-close{
+  position:absolute;
+  top:20px;
+  right:20px;
+  font-size:26px;
+  color:white;
+  cursor:pointer;
+  background:rgba(255,255,255,0.1);
+  padding:6px 12px;
+  border-radius:12px;
+}
+
+.lightbox-indicator{
+  margin-top:15px;
+  color:white;
+  font-size:14px;
+  opacity:0.8;
+}
+
+@keyframes fadeIn{
+  from{opacity:0;}
+  to{opacity:1;}
+}
   
 /* ADS */
 .ads{
@@ -405,18 +451,14 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 
 </div>
 
-  <div id="lightbox" style="
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.95);
-display:none;
-align-items:center;
-justify-content:center;
-z-index:9999;">
-  <img id="lightboxImg" style="max-width:95%; max-height:95%;">
+  <div id="lightbox" class="lightbox">
+
+  <div class="lightbox-close" onclick="closeLightbox()">✕</div>
+
+  <img id="lightboxImg">
+
+  <div class="lightbox-indicator" id="lightboxIndicator"></div>
+
 </div>
 <!-- КОНЕЦ ГЛАВНОГО -->
 
@@ -720,6 +762,89 @@ function buildImgUrl(src){
   // иначе просто возвращаем как есть
   return src;
 }
+
+ let currentGallery = [];
+let currentIndex = 0;
+
+function openLightbox(index, placeId){
+
+  const place = allPlaces.find(p=>p.id===placeId);
+  if(!place) return;
+
+  currentGallery = Array.isArray(place.photos) && place.photos.length
+    ? place.photos.map(p=>p.image)
+    : (place.image ? [place.image] : []);
+
+  currentIndex = index;
+
+  showLightboxImage();
+  document.getElementById("lightbox").style.display="flex";
+}
+
+function openMenuLightbox(index, placeId){
+
+  const place = allPlaces.find(p=>p.id===placeId);
+  if(!place || !place.menu) return;
+
+  currentGallery = place.menu.map(m=>m.image);
+  currentIndex = index;
+
+  showLightboxImage();
+  document.getElementById("lightbox").style.display="flex";
+}
+
+function showLightboxImage(){
+
+  if(!currentGallery.length) return;
+
+  const img = document.getElementById("lightboxImg");
+  img.src = buildImgUrl(currentGallery[currentIndex]);
+
+  document.getElementById("lightboxIndicator").innerText =
+    `${currentIndex + 1} / ${currentGallery.length}`;
+}
+
+function closeLightbox(){
+  document.getElementById("lightbox").style.display="none";
+}
+
+document.getElementById("lightbox").addEventListener("click", function(e){
+  if(e.target.id === "lightbox"){
+    closeLightbox();
+  }
+}); 
+
+ let startX = 0;
+
+document.getElementById("lightboxImg").addEventListener("touchstart", e=>{
+  startX = e.touches[0].clientX;
+});
+
+document.getElementById("lightboxImg").addEventListener("touchend", e=>{
+  let diff = e.changedTouches[0].clientX - startX;
+
+  if(Math.abs(diff) > 50){
+    if(diff < 0){
+      nextImage();
+    } else {
+      prevImage();
+    }
+  }
+});
+
+function nextImage(){
+  if(currentIndex < currentGallery.length - 1){
+    currentIndex++;
+    showLightboxImage();
+  }
+}
+
+function prevImage(){
+  if(currentIndex > 0){
+    currentIndex--;
+    showLightboxImage();
+  }
+} 
 
 // ---- ЗАГРУЗКА мест: получаем фото + user-vote/info и мержим ----
 async function loadPlaces(){
