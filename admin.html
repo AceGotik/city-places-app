@@ -15,9 +15,7 @@ color:white;
 padding:20px;
 }
 
-h2{margin-top:0;}
-
-input, select{
+input{
 width:100%;
 padding:10px;
 margin:6px 0;
@@ -33,9 +31,9 @@ cursor:pointer;
 margin-top:8px;
 }
 
-.add-btn{ background:#22c55e; color:white; }
-.delete-btn{ background:#ef4444; color:white; }
-.edit-btn{ background:#3b82f6; color:white; }
+.add-btn{background:#22c55e;color:white;}
+.delete-btn{background:#ef4444;color:white;}
+.edit-btn{background:#3b82f6;color:white;}
 
 .card{
 background:rgba(255,255,255,0.08);
@@ -60,8 +58,8 @@ color:white;
 background:#3b82f6;
 }
 
-.tab{ display:none; }
-.tab.active{ display:block; }
+.tab{display:none;}
+.tab.active{display:block;}
 
 .modal{
 position:fixed;
@@ -73,6 +71,7 @@ background:rgba(0,0,0,0.7);
 display:none;
 justify-content:center;
 align-items:center;
+overflow:auto;
 }
 
 .modal-content{
@@ -82,6 +81,14 @@ border-radius:12px;
 width:95%;
 max-width:500px;
 }
+
+.drop-zone{
+padding:20px;
+border:2px dashed #3b82f6;
+border-radius:10px;
+text-align:center;
+margin-bottom:10px;
+}
 </style>
 </head>
 
@@ -90,8 +97,8 @@ max-width:500px;
 <h2>Admin Panel</h2>
 
 <div class="tabs">
-  <button id="tabBtnPlaces" class="active" onclick="showTab('places')">Заведения</button>
-  <button id="tabBtnBanners" onclick="showTab('banners')">Баннеры</button>
+<button id="tabBtnPlaces" class="active" onclick="showTab('places')">Заведения</button>
+<button id="tabBtnBanners" onclick="showTab('banners')">Баннеры</button>
 </div>
 
 <!-- ================= PLACES ================= -->
@@ -128,25 +135,38 @@ max-width:500px;
 <!-- ================= MODAL ================= -->
 
 <div class="modal" id="editModal">
-  <div class="modal-content">
-    <h3>Редактирование заведения</h3>
+<div class="modal-content">
 
-    <input id="editName" placeholder="Название">
-    <input id="editPrice" placeholder="Средний чек">
-    <input id="editStreet" placeholder="Улица">
-    <input id="editWorkTime" placeholder="График">
-    <input id="editLatitude" placeholder="Широта">
-    <input id="editLongitude" placeholder="Долгота">
+<h3>Редактирование</h3>
 
-    <h4>Фото заведения</h4>
-    <input type="file" id="placePhotos" multiple>
+<input id="editName" placeholder="Название">
+<input id="editPrice" placeholder="Средний чек">
+<input id="editStreet" placeholder="Улица">
+<input id="editWorkTime" placeholder="График">
+<input id="editLatitude" placeholder="Широта">
+<input id="editLongitude" placeholder="Долгота">
 
-    <h4>Фото меню</h4>
-    <input type="file" id="menuPhotos" multiple>
+<button onclick="hideKeyboard()">Скрыть клавиатуру</button>
 
-    <button class="add-btn" onclick="saveEdit()">Сохранить</button>
-    <button class="delete-btn" onclick="closeModal()">Закрыть</button>
-  </div>
+<h4>Фото заведения</h4>
+<div id="dropZonePlace" class="drop-zone">
+Перетащи фото сюда или нажми
+<input type="file" id="placePhotos" multiple style="display:none">
+</div>
+
+<h4>Фото меню</h4>
+<div id="dropZoneMenu" class="drop-zone">
+Перетащи меню сюда или нажми
+<input type="file" id="menuPhotos" multiple style="display:none">
+</div>
+
+<h4>Текущие фото</h4>
+<div id="currentPhotos"></div>
+
+<button class="add-btn" onclick="saveEdit()">Сохранить</button>
+<button class="delete-btn" onclick="closeModal()">Закрыть</button>
+
+</div>
 </div>
 
 <script>
@@ -155,183 +175,229 @@ Telegram.WebApp.expand();
 
 const API = "https://city-places-app-production.up.railway.app";
 const telegramId = Telegram.WebApp.initDataUnsafe?.user?.id;
-const ADMIN_ID = 315901039;
-
 let editingId = null;
 
+// TAB SWITCH
 function showTab(tab){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
-
-  document.getElementById("tab-"+tab).classList.add("active");
-  document.getElementById("tabBtn"+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add("active");
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+document.getElementById("tab-"+tab).classList.add("active");
+document.getElementById("tabBtn"+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add("active");
 }
 
-// ================= PLACES =================
-
+// LOAD PLACES
 function loadPlaces(){
-  fetch(API + "/places")
-  .then(res=>res.json())
-  .then(data=>{
-    placesList.innerHTML="";
-    data.forEach(p=>{
-      placesList.innerHTML+=`
-        <div class="card">
-          <b>${p.name}</b><br>
-          💰 ${p.average_price || "-"} ₽<br>
-          📍 ${p.street || "-"}<br>
-          ⭐ ${p.rating || 0}<br><br>
-          <button class="edit-btn" onclick="openEdit(${p.id})">Редактировать</button>
-          <button class="delete-btn" onclick="deletePlace(${p.id})">Удалить</button>
-        </div>
-      `;
-    });
-  });
+fetch(API+"/places")
+.then(r=>r.json())
+.then(data=>{
+placesList.innerHTML="";
+data.forEach(p=>{
+placesList.innerHTML+=`
+<div class="card">
+<b>${p.name}</b><br>
+💰 ${p.average_price||"-"} ₽<br>
+📍 ${p.street||"-"}<br>
+⭐ ${p.rating||0}<br><br>
+<button class="edit-btn" onclick="openEdit(${p.id})">Редактировать</button>
+<button class="delete-btn" onclick="deletePlace(${p.id})">Удалить</button>
+</div>
+`;
+});
+});
 }
 
 function addPlace(){
-  fetch(API+"/places",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      name:newName.value,
-      average_price:parseInt(newPrice.value)||null,
-      street:newStreet.value||null,
-      work_time:newWorkTime.value||null,
-      latitude:parseFloat(newLatitude.value)||null,
-      longitude:parseFloat(newLongitude.value)||null
-    })
-  }).then(()=>loadPlaces());
+fetch(API+"/places",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+name:newName.value,
+average_price:parseInt(newPrice.value)||null,
+street:newStreet.value||null,
+work_time:newWorkTime.value||null,
+latitude:parseFloat(newLatitude.value)||null,
+longitude:parseFloat(newLongitude.value)||null
+})
+}).then(()=>loadPlaces());
 }
 
 function deletePlace(id){
-  fetch(API+`/admin/places/${id}`,{
-    method:"DELETE",
-    headers:{"telegram-id":telegramId}
-  }).then(()=>loadPlaces());
+fetch(API+`/admin/places/${id}`,{
+method:"DELETE",
+headers:{"telegram-id":telegramId}
+}).then(()=>loadPlaces());
 }
 
-// ================= EDIT =================
-
+// OPEN EDIT
 function openEdit(id){
-  editingId=id;
-  fetch(API+"/places")
-  .then(res=>res.json())
-  .then(data=>{
-    const p=data.find(x=>x.id===id);
-    editName.value=p.name;
-    editPrice.value=p.average_price||"";
-    editStreet.value=p.street||"";
-    editWorkTime.value=p.work_time||"";
-    editLatitude.value=p.latitude||"";
-    editLongitude.value=p.longitude||"";
-    editModal.style.display="flex";
-  });
+editingId=id;
+fetch(API+"/places")
+.then(r=>r.json())
+.then(data=>{
+const p=data.find(x=>x.id===id);
+editName.value=p.name;
+editPrice.value=p.average_price||"";
+editStreet.value=p.street||"";
+editWorkTime.value=p.work_time||"";
+editLatitude.value=p.latitude||"";
+editLongitude.value=p.longitude||"";
+editModal.style.display="flex";
+loadCurrentPhotos();
+});
 }
 
 function closeModal(){
-  editModal.style.display="none";
+editModal.style.display="none";
 }
 
+// SAVE EDIT
 function saveEdit(){
-
-  fetch(API+`/admin/places/${editingId}`,{
-    method:"PUT",
-    headers:{
-      "Content-Type":"application/json",
-      "telegram-id":telegramId
-    },
-    body:JSON.stringify({
-      name:editName.value,
-      average_price:parseInt(editPrice.value)||null,
-      street:editStreet.value||null,
-      work_time:editWorkTime.value||null,
-      latitude:parseFloat(editLatitude.value)||null,
-      longitude:parseFloat(editLongitude.value)||null
-    })
-  }).then(()=>{
-
-    uploadPhotos();
-    uploadMenu();
-
-    closeModal();
-    loadPlaces();
-  });
+fetch(API+`/admin/places/${editingId}`,{
+method:"PUT",
+headers:{
+"Content-Type":"application/json",
+"telegram-id":telegramId
+},
+body:JSON.stringify({
+name:editName.value,
+average_price:parseInt(editPrice.value)||null,
+street:editStreet.value||null,
+work_time:editWorkTime.value||null,
+latitude:parseFloat(editLatitude.value)||null,
+longitude:parseFloat(editLongitude.value)||null
+})
+}).then(()=>{
+uploadPhotos();
+uploadMenu();
+closeModal();
+loadPlaces();
+});
 }
 
+// UPLOAD PHOTOS
 function uploadPhotos(){
-  const files=document.getElementById("placePhotos").files;
-  if(files.length===0) return;
-
-  const formData=new FormData();
-  for(let f of files){
-    formData.append("files",f);
-  }
-
-  fetch(API+`/admin/places/${editingId}/photos`,{
-    method:"POST",
-    headers:{"telegram-id":telegramId},
-    body:formData
-  });
+const files=document.getElementById("placePhotos").files;
+if(files.length===0) return;
+const fd=new FormData();
+for(let f of files){fd.append("files",f);}
+fetch(API+`/admin/places/${editingId}/photos`,{
+method:"POST",
+headers:{"telegram-id":telegramId},
+body:fd
+});
 }
 
 function uploadMenu(){
-  const files=document.getElementById("menuPhotos").files;
-  if(files.length===0) return;
-
-  const formData=new FormData();
-  for(let f of files){
-    formData.append("files",f);
-  }
-
-  fetch(API+`/admin/places/${editingId}/menu`,{
-    method:"POST",
-    headers:{"telegram-id":telegramId},
-    body:formData
-  });
+const files=document.getElementById("menuPhotos").files;
+if(files.length===0) return;
+const fd=new FormData();
+for(let f of files){fd.append("files",f);}
+fetch(API+`/admin/places/${editingId}/menu`,{
+method:"POST",
+headers:{"telegram-id":telegramId},
+body:fd
+});
 }
 
-// ================= BANNERS =================
+// LOAD CURRENT PHOTOS
+function loadCurrentPhotos(){
+fetch(API+`/admin/places/${editingId}/photos`)
+.then(r=>r.json())
+.then(data=>{
+currentPhotos.innerHTML="";
+data.forEach(photo=>{
+currentPhotos.innerHTML+=`
+<div style="margin-bottom:10px">
+<img src="${API}${photo.image}" width="100%" style="border-radius:8px"><br>
+<button class="delete-btn" onclick="deletePhoto(${photo.id}, '${photo.type}')">Удалить</button>
+</div>
+`;
+});
+});
+}
 
+function deletePhoto(id,type){
+let url;
+if(type==="menu"){
+url=API+`/admin/menu/${id}`;
+}else{
+url=API+`/admin/photos/${editingId}`;
+}
+fetch(url,{
+method:"DELETE",
+headers:{"telegram-id":telegramId}
+}).then(()=>loadCurrentPhotos());
+}
+
+// DRAG & DROP
+function setupDrop(zoneId,inputId){
+const zone=document.getElementById(zoneId);
+const input=document.getElementById(inputId);
+
+zone.onclick=()=>input.click();
+
+zone.ondragover=e=>{
+e.preventDefault();
+zone.style.background="#1e40af";
+};
+
+zone.ondragleave=()=>zone.style.background="transparent";
+
+zone.ondrop=e=>{
+e.preventDefault();
+zone.style.background="transparent";
+input.files=e.dataTransfer.files;
+};
+}
+
+setupDrop("dropZonePlace","placePhotos");
+setupDrop("dropZoneMenu","menuPhotos");
+
+// BANNERS
 function loadBanners(){
-  fetch(API+"/banners")
-  .then(res=>res.json())
-  .then(data=>{
-    bannersList.innerHTML="";
-    data.forEach(b=>{
-      bannersList.innerHTML+=`
-        <div class="card">
-          <img src="${b.image}" width="100%"><br>
-          ${b.link||""}<br>
-          <button class="delete-btn" onclick="deleteBanner(${b.id})">Удалить</button>
-        </div>
-      `;
-    });
-  });
+fetch(API+"/banners")
+.then(r=>r.json())
+.then(data=>{
+bannersList.innerHTML="";
+data.forEach(b=>{
+bannersList.innerHTML+=`
+<div class="card">
+<img src="${b.image}" width="100%"><br>
+${b.link||""}<br>
+<button class="delete-btn" onclick="deleteBanner(${b.id})">Удалить</button>
+</div>
+`;
+});
+});
 }
 
 function addBanner(){
-  fetch(API+"/admin/banners",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "telegram-id":telegramId
-    },
-    body:JSON.stringify({
-      image:bannerImage.value,
-      link:bannerLink.value||null
-    })
-  }).then(()=>loadBanners());
+fetch(API+"/admin/banners",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"telegram-id":telegramId
+},
+body:JSON.stringify({
+image:bannerImage.value,
+link:bannerLink.value||null
+})
+}).then(()=>loadBanners());
 }
 
 function deleteBanner(id){
-  fetch(API+`/admin/banners/${id}`,{
-    method:"DELETE",
-    headers:{"telegram-id":telegramId}
-  }).then(()=>loadBanners());
+fetch(API+`/admin/banners/${id}`,{
+method:"DELETE",
+headers:{"telegram-id":telegramId}
+}).then(()=>loadBanners());
 }
 
-// INIT
+// HIDE KEYBOARD
+function hideKeyboard(){
+document.activeElement.blur();
+Telegram.WebApp.closeKeyboard();
+}
+
 loadPlaces();
 loadBanners();
 
