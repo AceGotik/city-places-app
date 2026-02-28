@@ -66,3 +66,10 @@ class Review(Base):
     recommendation = Column(String)  # positive / negative / neutral
     created_at = Column(DateTime, default=datetime.utcnow)
     username = Column(String)
+
+class ReviewLike(Base):
+    __tablename__ = "review_likes"
+
+    id = Column(Integer, primary_key=True)
+    review_id = Column(Integer, ForeignKey("reviews.id"))
+    telegram_id = Column(BigInteger)
