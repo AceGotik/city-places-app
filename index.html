@@ -820,7 +820,7 @@ function openPlace(id){
 
       <!-- MENU -->
       <h3 style="margin-top:30px;">📋 Фото меню</h3>
-      <p style="opacity:.6;">Пока нет фото меню</p>
+      <div id="menuPhotosContainer" style="margin-top:10px;"></div>
 
       <!-- REVIEWS -->
       <h3 style="margin-top:30px;">⭐ Отзывы</h3>
@@ -1012,6 +1012,25 @@ function submitReview(placeId){
       </div>
     ` : ""}
 
+<div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+  
+  <div style="cursor:pointer;"
+       onclick="toggleReviewLike(${review.id}, ${placeId})">
+    ${review.user_liked ? "👍" : "👍🏻"} ${review.likes}
+  </div>
+
+  ${review.is_mine ? `
+    <div style="
+      font-size:13px;
+      color:#ff4d4d;
+      cursor:pointer;"
+      onclick="deleteReview(${review.id}, ${placeId})">
+      🗑 Удалить
+    </div>
+  ` : ""}
+  
+</div>
+
   </div>
 `;
     });
@@ -1029,7 +1048,42 @@ function deleteReview(reviewId, placeId){
   })
   .then(()=>loadReviews(placeId));
 }
-  
+
+function toggleReviewLike(reviewId, placeId){
+
+  fetch(API_BASE + `/reviews/${reviewId}/like`,{
+    method:"POST",
+    headers:{
+      "telegram-id": telegramId
+    }
+  })
+  .then(()=>loadReviews(placeId));
+}
+
+function loadMenuPhotos(placeId){
+
+  fetch(API_BASE + `/places/${placeId}/menu_photos`)
+  .then(res=>res.json())
+  .then(data=>{
+
+    const container = document.getElementById("menuPhotosContainer");
+    container.innerHTML = "";
+
+    if(!data.length){
+      container.innerHTML = "<p style='opacity:.6;'>Пока нет фото меню</p>";
+      return;
+    }
+
+    data.forEach(photo=>{
+      container.innerHTML += `
+        <img src="${photo.image}" 
+             style="width:100%; border-radius:14px; margin-bottom:10px;">
+      `;
+    });
+
+  });
+}
+
 function vote(id, value){
 
   if(!telegramId){
