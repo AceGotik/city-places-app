@@ -14,6 +14,7 @@ from models import ReviewLike
 from models import MenuPhoto
 import shutil
 from fastapi import FastAPI
+from fastapi import UploadFile, File
 import os
 
 if not os.path.exists("uploads"):
@@ -234,6 +235,33 @@ def delete_place(
     db.commit()
 
     return {"message": "Удалено"}
+
+@app.put("/admin/places/{place_id}")
+def update_place(
+    place_id: int,
+    place_data: PlaceSchema,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    if telegram_id != ADMIN_ID:
+        return {"error": "Нет доступа"}
+
+    place = db.query(Place).filter(Place.id == place_id).first()
+    if not place:
+        return {"error": "Не найдено"}
+
+    place.name = place_data.name
+    place.average_price = place_data.average_price
+    place.street = place_data.street
+    place.type = place_data.type
+    place.work_time = place_data.work_time
+    place.image = place_data.image
+    place.latitude = place_data.latitude
+    place.longitude = place_data.longitude
+
+    db.commit()
+
+    return {"message": "Обновлено"}
 
 
 # =============================
@@ -617,7 +645,10 @@ def upload_place_photos(
     urls = []
 
     for file in files:
-        file_path = f"uploads/{file.filename}"
+        import uuid
+
+unique_name = f"{uuid.uuid4()}_{file.filename}"
+file_path = f"uploads/{unique_name}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
@@ -643,7 +674,10 @@ def upload_menu_photos(
     urls = []
 
     for file in files:
-        file_path = f"uploads/{file.filename}"
+        import uuid
+
+unique_name = f"{uuid.uuid4()}_{file.filename}"
+file_path = f"uploads/{unique_name}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
@@ -661,3 +695,53 @@ def upload_menu_photos(
 from fastapi.staticfiles import StaticFiles
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+@app.get("/admin/places/{place_id}/photos")
+def get_place_photos(place_id: int, db: Session = Depends(get_db)):
+    place = db.query(Place).filter(Place.id == place_id).first()
+    if not place:
+        return []
+
+    if not place.image:
+        return []
+
+    return [{"id": 0, "image": place.image}]
+
+@app.delete("/admin/photos/{photo_id}")
+def delete_place_photo(
+    photo_id: int,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    if telegram_id != ADMIN_ID:
+        return {"error": "Нет доступа"}
+
+    # тут у тебя одно фото в place.image
+    # поэтому просто очищаем image
+
+    place = db.query(Place).filter(Place.image.isnot(None)).first()
+
+    if place:
+        place.image = None
+        db.commit()
+
+    return {"message": "Удалено"}
+
+@app.delete("/admin/menu/{photo_id}")
+def delete_menu_photo(
+    photo_id: int,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    if telegram_id != ADMIN_ID:
+        return {"error": "Нет доступа"}
+
+    photo = db.query(MenuPhoto).filter(MenuPhoto.id == photo_id).first()
+    if not photo:
+        return {"error": "Не найдено"}
+
+    db.delete(photo)
+    db.commit()
+
+    return {"message": "Удалено"}
+
