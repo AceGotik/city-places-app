@@ -114,7 +114,43 @@ def debug_encoding(db: Session = Depends(get_db)):
 
 @app.get("/places")
 def get_places(db: Session = Depends(get_db)):
-    return db.query(Place).all()
+
+    places = db.query(Place).all()
+    result = []
+
+    for place in places:
+
+        place_photos = db.query(PlacePhoto).filter(
+            PlacePhoto.place_id == place.id
+        ).all()
+
+        menu_photos = db.query(MenuPhoto).filter(
+            MenuPhoto.place_id == place.id
+        ).all()
+
+        result.append({
+            "id": place.id,
+            "name": place.name,
+            "average_price": place.average_price,
+            "street": place.street,
+            "type": place.type,
+            "work_time": place.work_time,
+            "rating": place.rating,
+            "image": place.image,  # обложка
+            "latitude": place.latitude,
+            "longitude": place.longitude,
+            "created_at": place.created_at,
+            "photos": [
+                {"id": p.id, "image": p.image}
+                for p in place_photos
+            ],
+            "menu": [
+                {"id": m.id, "image": m.image}
+                for m in menu_photos
+            ]
+        })
+
+    return result
 
 
 @app.get("/places_with_vote")
@@ -727,77 +763,34 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 # Admin helpers to list/delete uploaded photos
 # =============================
 @app.get("/admin/places/{place_id}/photos")
-def get_place_photos(place_id: int, db: Session = Depends(get_db)):
-    """
-    Возвращает главное фото place (если есть) и список menu_photos для заведения.
-    Формат: [{"id": <id_or_0_for_main>, "image": url, "type":"place"/"menu"}]
-    """
-    place = db.query(Place).filter(Place.id == place_id).first()
-    if not place:
-        return []
+def get_admin_place_photos(place_id: int, db: Session = Depends(get_db)):
 
     result = []
 
-    if place.image:
-        result.append({"id": 0, "image": place.image, "type": "place"})
+    place_photos = db.query(PlacePhoto).filter(
+        PlacePhoto.place_id == place_id
+    ).all()
 
-    menu_photos = db.query(MenuPhoto).filter(MenuPhoto.place_id == place_id).all()
-    for mp in menu_photos:
-        result.append({"id": mp.id, "image": mp.image, "type": "menu"})
+    for p in place_photos:
+        result.append({
+            "id": p.id,
+            "image": p.image,
+            "type": "place"
+        })
+
+    menu_photos = db.query(MenuPhoto).filter(
+        MenuPhoto.place_id == place_id
+    ).all()
+
+    for m in menu_photos:
+        result.append({
+            "id": m.id,
+            "image": m.image,
+            "type": "menu"
+        })
 
     return result
 
-
-@app.delete("/admin/photos/{photo_id}")
-def delete_place_photo(
-    photo_id: int,
-    telegram_id: int = Header(None),
-    db: Session = Depends(get_db)
-):
-    """
-    Удаление фото:
-    - если photo_id == 0 — ничего не делаем (плохой id)
-    - пытаемся удалить menu photo с таким id
-    - если menu photo не найден — считаем, что это place.id и очищаем place.image
-    """
-    if telegram_id != ADMIN_ID:
-        return {"error": "Нет доступа"}
-
-    # пробуем удалить menu photo
-    menu = db.query(MenuPhoto).filter(MenuPhoto.id == photo_id).first()
-    if menu:
-        # удаляем файл с диска если есть
-        try:
-            path = menu.image
-            if path and path.startswith("/uploads/"):
-                fs_path = path.lstrip("/")
-                if os.path.exists(fs_path):
-                    os.remove(fs_path)
-        except Exception:
-            pass
-
-        db.delete(menu)
-        db.commit()
-        return {"message": "Deleted menu photo"}
-
-    # не нашли menu photo — ищем place с id == photo_id
-    place = db.query(Place).filter(Place.id == photo_id).first()
-    if place:
-        # удаляем файл с диска если есть
-        try:
-            path = place.image
-            if path and path.startswith("/uploads/"):
-                fs_path = path.lstrip("/")
-                if os.path.exists(fs_path):
-                    os.remove(fs_path)
-        except Exception:
-            pass
-
-        place.image = None
-        db.commit()
-        return {"message": "Deleted place main photo"}
-
-    return {"error": "Not found"}
 
 
 @app.delete("/admin/menu/{photo_id}")
@@ -821,6 +814,37 @@ def delete_menu_photo(
             if os.path.exists(fs_path):
                 os.remove(fs_path)
     except Exception:
+        pass
+
+    db.delete(photo)
+    db.commit()
+
+    return {"message": "Удалено"}
+
+@app.delete("/admin/place_photo/{photo_id}")
+def delete_place_photo(
+    photo_id: int,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    if telegram_id != ADMIN_ID:
+        return {"error": "Нет доступа"}
+
+    photo = db.query(PlacePhoto).filter(
+        PlacePhoto.id == photo_id
+    ).first()
+
+    if not photo:
+        return {"error": "Не найдено"}
+
+    # удаляем файл
+    try:
+        path = photo.image
+        if path and path.startswith("/uploads/"):
+            fs_path = path.lstrip("/")
+            if os.path.exists(fs_path):
+                os.remove(fs_path)
+    except:
         pass
 
     db.delete(photo)
