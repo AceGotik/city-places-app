@@ -10,6 +10,7 @@ from models import Place, User, Vote, Favorite, Banner, Visited
 from sqlalchemy import text
 from sqlalchemy import Column, Integer, BigInteger, ForeignKey
 from models import Review
+from models import ReviewLike
 
 app = FastAPI()
 
@@ -490,6 +491,8 @@ def get_reviews(
     "telegram_id": r.telegram_id,
     "created_at": r.created_at,
     "is_mine": r.telegram_id == telegram_id
+    "likes": likes_count,
+    "user_liked": user_liked,
 })
 
     return result
@@ -512,3 +515,31 @@ def delete_review(
     db.commit()
 
     return {"message": "Deleted"}
+
+@app.post("/reviews/{review_id}/like")
+def toggle_review_like(
+    review_id: int,
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    if telegram_id is None:
+        return {"error": "No telegram_id"}
+
+    existing = db.query(ReviewLike).filter(
+        ReviewLike.review_id == review_id,
+        ReviewLike.telegram_id == telegram_id
+    ).first()
+
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"message": "Removed"}
+
+    new_like = ReviewLike(
+        review_id=review_id,
+        telegram_id=telegram_id
+    )
+    db.add(new_like)
+    db.commit()
+
+    return {"message": "Added"}
