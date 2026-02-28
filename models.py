@@ -81,3 +81,11 @@ class MenuPhoto(Base):
     place_id = Column(Integer, ForeignKey("places.id"))
     image = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class PlacePhoto(Base):
+    __tablename__ = "place_photos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    place_id = Column(Integer, ForeignKey("places.id"))
+    image = Column(String)
+
