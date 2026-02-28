@@ -1,28 +1,27 @@
-from fastapi import FastAPI, Header, Depends, Query 
+from fastapi import FastAPI, Header, Depends, Query, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text, Column, Integer, BigInteger, ForeignKey
 from pydantic import BaseModel
 from typing import Optional
 from database import engine, Base, SessionLocal
-from models import Place, User, Vote, Favorite, Banner, Visited
-from sqlalchemy import text
-from sqlalchemy import Column, Integer, BigInteger, ForeignKey
-from models import Review
-from models import ReviewLike
-from models import MenuPhoto
+from models import (
+    Place, User, Vote, Favorite, Banner, Visited,
+    Review, ReviewLike, MenuPhoto
+)
 import shutil
-from fastapi import FastAPI
-from fastapi import UploadFile, File
 import os
+import uuid
 
+# ensure uploads dir exists
 if not os.path.exists("uploads"):
     os.makedirs("uploads")
 
 app = FastAPI()
 
-# ✅ ДОБАВЛЕН CORS (БОЛЬШЕ НИЧЕГО НЕ МЕНЯЛОСЬ)
+# ✅ CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -31,15 +30,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# create tables if not exist
 Base.metadata.create_all(bind=engine)
 
-ADMIN_ID = 315901039  # твой ID
+ADMIN_ID = 315901039  # замените на свой ID если нужно
 
 
 # =============================
 # DB DEPENDENCY (ВАЖНО)
 # =============================
-
 def get_db():
     db = SessionLocal()
     try:
@@ -51,7 +50,6 @@ def get_db():
 # =============================
 # FRONT
 # =============================
-
 @app.get("/")
 def serve_frontend():
     response = FileResponse("index.html")
@@ -76,7 +74,6 @@ def serve_admin():
 # =============================
 # SCHEMAS
 # =============================
-
 class PlaceSchema(BaseModel):
     name: str
     average_price: Optional[int] = None
@@ -93,11 +90,9 @@ class BannerSchema(BaseModel):
     link: Optional[str] = None
 
 
-
 # =============================
 # USER HELPER
 # =============================
-
 def get_or_create_user(db: Session, telegram_id: int):
     user = db.query(User).filter(User.telegram_id == telegram_id).first()
     if not user:
@@ -111,7 +106,6 @@ def get_or_create_user(db: Session, telegram_id: int):
 # =============================
 # PLACES
 # =============================
-
 @app.get("/debug-encoding")
 def debug_encoding(db: Session = Depends(get_db)):
     result = db.execute("SHOW client_encoding;").fetchone()
@@ -214,7 +208,6 @@ def create_place(place: PlaceSchema, db: Session = Depends(get_db)):
 # =============================
 # DELETE PLACE
 # =============================
-
 @app.delete("/admin/places/{place_id}")
 def delete_place(
     place_id: int,
@@ -226,6 +219,7 @@ def delete_place(
 
     db.query(Vote).filter(Vote.place_id == place_id).delete()
     db.query(Favorite).filter(Favorite.place_id == place_id).delete()
+    db.query(MenuPhoto).filter(MenuPhoto.place_id == place_id).delete()
 
     place = db.query(Place).filter(Place.id == place_id).first()
     if not place:
@@ -235,6 +229,7 @@ def delete_place(
     db.commit()
 
     return {"message": "Удалено"}
+
 
 @app.put("/admin/places/{place_id}")
 def update_place(
@@ -265,7 +260,6 @@ def update_place(
 
 
 # =============================
-
 @app.post("/places/{place_id}/vote")
 def vote(
     place_id: int,
@@ -306,10 +300,10 @@ def vote(
 
     return {"rating": total}
 
+
 # =============================
 # FAVORITES
 # =============================
-
 @app.post("/places/{place_id}/favorite")
 def toggle_favorite(
     place_id: int,
@@ -375,6 +369,7 @@ def get_favorites(
 
     return result
 
+
 @app.post("/places/{place_id}/visit")
 def mark_visited(
     place_id: int,
@@ -402,11 +397,11 @@ def mark_visited(
     db.commit()
 
     return {"message": "Added"}
-    
+
+
 # =============================
 # BANNERS
 # =============================
-
 @app.get("/banners")
 def get_banners(db: Session = Depends(get_db)):
     return db.query(Banner).all()
@@ -468,6 +463,9 @@ def delete_banner(
     return {"message": "Удалено"}
 
 
+# =============================
+# REVIEWS
+# =============================
 @app.post("/places/{place_id}/review")
 def add_review(
     place_id: int,
@@ -505,6 +503,7 @@ def add_review(
 
     return {"message": "Added"}
 
+
 @app.get("/places/{place_id}/reviews")
 def get_reviews(
     place_id: int,
@@ -536,7 +535,7 @@ def get_reviews(
             "id": r.id,
             "text": r.text,
             "recommendation": r.recommendation,
-            "username": r.username,
+            "username": getattr(r, "username", None),
             "telegram_id": r.telegram_id,
             "created_at": r.created_at,
             "is_mine": r.telegram_id == telegram_id,
@@ -545,6 +544,7 @@ def get_reviews(
         })
 
     return result
+
 
 @app.delete("/reviews/{review_id}")
 def delete_review(
@@ -564,6 +564,7 @@ def delete_review(
     db.commit()
 
     return {"message": "Deleted"}
+
 
 @app.post("/reviews/{review_id}/like")
 def toggle_review_like(
@@ -594,7 +595,9 @@ def toggle_review_like(
     return {"message": "Added"}
 
 
-
+# =============================
+# MENU PHOTOS (simple add via URL) - оставляем для совместимости
+# =============================
 @app.post("/places/{place_id}/menu_photo")
 def add_menu_photo(
     place_id: int,
@@ -615,6 +618,7 @@ def add_menu_photo(
 
     return {"message": "Added"}
 
+
 @app.get("/places/{place_id}/menu_photos")
 def get_menu_photos(
     place_id: int,
@@ -626,8 +630,10 @@ def get_menu_photos(
 
     return photos
 
-## админка
 
+# =============================
+# ADMIN: upload place photos (multiple) and menu images (multiple)
+# =============================
 @app.post("/admin/places/{place_id}/photos")
 def upload_place_photos(
     place_id: int,
@@ -635,6 +641,11 @@ def upload_place_photos(
     telegram_id: int = Header(None),
     db: Session = Depends(get_db)
 ):
+    """
+    Загрузить несколько фото для заведения.
+    Сохраняет первое фото как основное (place.image = first).
+    Возвращает список url-ов.
+    """
     if telegram_id != ADMIN_ID:
         return {"error": "Нет доступа"}
 
@@ -645,14 +656,14 @@ def upload_place_photos(
     urls = []
 
     for file in files:
-        import uuid
+        unique_name = f"{uuid.uuid4()}_{file.filename}"
+        file_path = os.path.join("uploads", unique_name)
 
-unique_name = f"{uuid.uuid4()}_{file.filename}"
-file_path = f"uploads/{unique_name}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        urls.append(f"/{file_path}")
+        url = f"/uploads/{unique_name}"
+        urls.append(url)
 
     # сохраняем первое фото как основное
     if urls:
@@ -661,6 +672,7 @@ file_path = f"uploads/{unique_name}"
 
     return {"urls": urls}
 
+
 @app.post("/admin/places/{place_id}/menu")
 def upload_menu_photos(
     place_id: int,
@@ -668,44 +680,62 @@ def upload_menu_photos(
     telegram_id: int = Header(None),
     db: Session = Depends(get_db)
 ):
+    """
+    Загружает несколько фото меню, добавляет записи MenuPhoto.
+    """
     if telegram_id != ADMIN_ID:
         return {"error": "Нет доступа"}
 
     urls = []
 
     for file in files:
-        import uuid
+        unique_name = f"{uuid.uuid4()}_{file.filename}"
+        file_path = os.path.join("uploads", unique_name)
 
-unique_name = f"{uuid.uuid4()}_{file.filename}"
-file_path = f"uploads/{unique_name}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
+        url = f"/uploads/{unique_name}"
         photo = MenuPhoto(
             place_id=place_id,
-            image=f"/{file_path}"
+            image=url
         )
         db.add(photo)
-        urls.append(f"/{file_path}")
+        urls.append(url)
 
     db.commit()
 
     return {"urls": urls}
 
-from fastapi.staticfiles import StaticFiles
 
+# static uploads
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+
+# =============================
+# Admin helpers to list/delete uploaded photos
+# =============================
 @app.get("/admin/places/{place_id}/photos")
 def get_place_photos(place_id: int, db: Session = Depends(get_db)):
+    """
+    Возвращает главное фото place (если есть) и список menu_photos для заведения.
+    Формат: [{"id": <id_or_0_for_main>, "image": url, "type":"place"/"menu"}]
+    """
     place = db.query(Place).filter(Place.id == place_id).first()
     if not place:
         return []
 
-    if not place.image:
-        return []
+    result = []
 
-    return [{"id": 0, "image": place.image}]
+    if place.image:
+        result.append({"id": 0, "image": place.image, "type": "place"})
+
+    menu_photos = db.query(MenuPhoto).filter(MenuPhoto.place_id == place_id).all()
+    for mp in menu_photos:
+        result.append({"id": mp.id, "image": mp.image, "type": "menu"})
+
+    return result
+
 
 @app.delete("/admin/photos/{photo_id}")
 def delete_place_photo(
@@ -713,19 +743,51 @@ def delete_place_photo(
     telegram_id: int = Header(None),
     db: Session = Depends(get_db)
 ):
+    """
+    Удаление фото:
+    - если photo_id == 0 — ничего не делаем (плохой id)
+    - пытаемся удалить menu photo с таким id
+    - если menu photo не найден — считаем, что это place.id и очищаем place.image
+    """
     if telegram_id != ADMIN_ID:
         return {"error": "Нет доступа"}
 
-    # тут у тебя одно фото в place.image
-    # поэтому просто очищаем image
+    # пробуем удалить menu photo
+    menu = db.query(MenuPhoto).filter(MenuPhoto.id == photo_id).first()
+    if menu:
+        # удаляем файл с диска если есть
+        try:
+            path = menu.image
+            if path and path.startswith("/uploads/"):
+                fs_path = path.lstrip("/")
+                if os.path.exists(fs_path):
+                    os.remove(fs_path)
+        except Exception:
+            pass
 
-    place = db.query(Place).filter(Place.image.isnot(None)).first()
+        db.delete(menu)
+        db.commit()
+        return {"message": "Deleted menu photo"}
 
+    # не нашли menu photo — ищем place с id == photo_id
+    place = db.query(Place).filter(Place.id == photo_id).first()
     if place:
+        # удаляем файл с диска если есть
+        try:
+            path = place.image
+            if path and path.startswith("/uploads/"):
+                fs_path = path.lstrip("/")
+                if os.path.exists(fs_path):
+                    os.remove(fs_path)
+        except Exception:
+            pass
+
         place.image = None
         db.commit()
+        return {"message": "Deleted place main photo"}
 
-    return {"message": "Удалено"}
+    return {"error": "Not found"}
+
 
 @app.delete("/admin/menu/{photo_id}")
 def delete_menu_photo(
@@ -740,8 +802,17 @@ def delete_menu_photo(
     if not photo:
         return {"error": "Не найдено"}
 
+    # удаляем файл с диска если есть
+    try:
+        path = photo.image
+        if path and path.startswith("/uploads/"):
+            fs_path = path.lstrip("/")
+            if os.path.exists(fs_path):
+                os.remove(fs_path)
+    except Exception:
+        pass
+
     db.delete(photo)
     db.commit()
 
     return {"message": "Удалено"}
-
