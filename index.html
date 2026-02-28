@@ -588,6 +588,39 @@ function renderMenu(place){
   return html;
 }
 
+// ------------- утилиты -------------
+function imgUrl(path){
+  if(!path) return "";
+  // Если путь уже абсолютный (http) — возвращаем как есть
+  if(path.startsWith("http://") || path.startsWith("https://")) return path;
+  // Иначе добавляем API_BASE (следим, чтобы не получилось двойного //)
+  return API_BASE + (path.startsWith("/") ? path : "/" + path);
+}
+
+// рендер маленькой галереи в карточке
+function renderGalleryInline(place){
+  const photos = place.photos || [];
+  // если нет дополнительных фото — пробуем основное cover
+  if(photos.length === 0 && place.image){
+    return `<div class="card-thumb"><img src="${imgUrl(place.image)}" style="width:100%;height:120px;object-fit:cover;border-radius:12px"></div>`;
+  }
+  if(photos.length === 0) return `<div class="card-thumb" style="height:120px;background:#0b1220;border-radius:12px"></div>`;
+
+  // показываем 2 фото (если есть) — компактно
+  const imgs = photos.slice(0,2).map(p=>`<img src="${imgUrl(p.image)}" style="width:100%;height:120px;object-fit:cover;border-radius:12px">`).join("");
+  return `<div style="display:flex;gap:8px">${imgs}</div>`;
+}
+
+// рендер меню (ссылка показана в деталях)
+function renderMenuGallery(place){
+  const menu = place.menu || [];
+  if(menu.length === 0) return `<p style="opacity:.6;">Пока нет фото меню</p>`;
+  return `
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-top:8px;">
+      ${menu.map(m=>`<img src="${imgUrl(m.image)}" style="height:160px;object-fit:cover;border-radius:12px;margin-right:8px">`).join("")}
+    </div>
+  `;
+}
   
 function loadPlaces(){
   fetch(API_BASE + "/places_with_vote", {
@@ -602,161 +635,218 @@ function loadPlaces(){
   });
 }
 
+// ---- helper: собирает правильный URL для картинки ----
+function buildImgUrl(src){
+  if(!src) return "";
+  // если уже абсолютная ссылка — оставляем
+  if(typeof src === "string" && (src.startsWith("http://") || src.startsWith("https://"))) return src;
+  // если относительный путь с ведущим слешем — прибавляем базу
+  if(src.startsWith("/")) return API_BASE + src;
+  // иначе просто возвращаем как есть
+  return src;
+}
+
+// ---- ЗАГРУЗКА мест: получаем фото + user-vote/info и мержим ----
+async function loadPlaces(){
+  try {
+    // получаем сначала places (с photos и menu), затем places_with_vote (vote+fav info)
+    const [placesRes, voteRes] = await Promise.all([
+      fetch(API_BASE + "/places"),
+      fetch(API_BASE + "/places_with_vote", { headers: { "telegram-id": telegramId } })
+    ]);
+
+    const places = await placesRes.json();
+    const votes = await voteRes.json();
+
+    const votesMap = new Map();
+    (Array.isArray(votes) ? votes : []).forEach(v => votesMap.set(v.id, v));
+
+    // мержим: берем все поля places + дополняем полями из votes (если есть)
+    allPlaces = (Array.isArray(places) ? places : []).map(p => {
+      const v = votesMap.get(p.id) || {};
+      return {
+        ...p,
+        user_vote: v.user_vote ?? 0,
+        is_favorite: v.is_favorite ?? false,
+        is_visited: v.is_visited ?? false,
+        rating: v.rating ?? p.rating ?? 0,
+        // гарантируем, что photos и menu — массивы
+        photos: Array.isArray(p.photos) ? p.photos : (p.photos ? [p.photos] : []),
+        menu: Array.isArray(p.menu) ? p.menu : (p.menu ? [p.menu] : [])
+      };
+    });
+
+    renderPlaces();
+  } catch (err) {
+    console.error("loadPlaces error:", err);
+  }
+}
+
+// ---- РЕНДЕР карточек со скролл-каруселью фото ----
 function renderPlaces(){
 
-let data = [...allPlaces];
+  let data = [...allPlaces];
 
-const newBtn = document.getElementById("newFilter");
-const container = document.getElementById("placesContainer");
-container.innerHTML = "";
+  const newBtn = document.getElementById("newFilter");
+  const container = document.getElementById("placesContainer");
+  container.innerHTML = "";
+    
+  let newPlaces = allPlaces.filter(p => p.created_at && isNew(p.created_at));
   
-let newPlaces = allPlaces.filter(p => p.created_at && isNew(p.created_at));
+  if(newPlaces.length > 0 && activeFilter !== "new"){
+    newBtn.classList.add("new-glow");
+  }else{
+    newBtn.classList.remove("new-glow");
+  }
+    
+  // 🔹 ФИЛЬТР ПО КАТЕГОРИИ
+  if(activeCategory !== "all"){
+    data = data.filter(p => parseInt(p.type) === activeCategory);
+  }
 
-if(newPlaces.length > 0 && activeFilter !== "new"){
-  newBtn.classList.add("new-glow");
-}else{
-  newBtn.classList.remove("new-glow");
-}
-  
-// 🔹 ФИЛЬТР ПО КАТЕГОРИИ
-  
-if(activeCategory !== "all"){
-  data = data.filter(p => parseInt(p.type) === activeCategory);
-}
+  // 🔹 ФИЛЬТР "НОВОЕ"
+  if(activeFilter === "new"){
+    data = data.filter(p => p.created_at && isNew(p.created_at));
+  }
 
+  // 🔹 ФИЛЬТР "РЯДОМ"
+  if(activeFilter === "near" && userLocation){
+    data = data.filter(p => {
+      if(!p.latitude || !p.longitude) return false;
 
-// 🔹 ФИЛЬТР "НОВОЕ"
-if(activeFilter === "new"){
-  data = data.filter(p => p.created_at && isNew(p.created_at));
-}
+      const distance = getDistance(
+        userLocation.lat,
+        userLocation.lng,
+        p.latitude,
+        p.longitude
+      );
 
-// 🔹 ФИЛЬТР "РЯДОМ"
-if(activeFilter === "near" && userLocation){
-  data = data.filter(p => {
-    if(!p.latitude || !p.longitude) return false;
+      p.distance = distance;
+      return distance <= 3; // радиус 3 км
+    });
 
-    const distance = getDistance(
-      userLocation.lat,
-      userLocation.lng,
-      p.latitude,
-      p.longitude
+    data.sort((a,b)=>a.distance-b.distance);
+  }
+    
+  // 🔎 ПОИСК
+  if(searchQuery){
+    data = data.filter(p =>
+      p.name && p.name.toLowerCase().includes(searchQuery)
     );
+  }
+    
+  // 🔹 СОРТИРОВКА "ПОПУЛЯРНЫЕ"
+  if(activeFilter === "popular"){
+    data = data.sort((a,b)=> (b.rating||0) - (a.rating||0));
+  }
 
-    p.distance = distance;
-    return distance <= 3; // радиус 3 км
+  // 🔥 Чистим карту
+  if(previewMarkers){
+    previewMarkers.clearLayers();
+  }
+
+  data.forEach(place=>{
+
+    const typeNames = {
+      1: "Бар",
+      2: "Кафе",
+      3: "Ресторан",
+      4: "Фастфуд"
+    };
+
+    const typeText = typeNames[place.type];
+      
+    let emoji = "📍";
+
+    if(place.type === 1) emoji = "🍸";
+    if(place.type === 2) emoji = "☕";
+    if(place.type === 3) emoji = "🍽";
+    if(place.type === 4) emoji = "🍔";
+
+    if(place.latitude && place.longitude){
+
+      const icon = L.divIcon({
+        className:"",
+        html:`
+        <div style="
+          width:44px;
+          height:44px;
+          border-radius:50%;
+          background:linear-gradient(135deg,#1d9bf0,#4da3ff);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:20px;
+          box-shadow:0 0 20px rgba(0,0,0,0.4);
+        ">
+        ${emoji}
+        </div>
+        `,
+        iconSize:[44,44],
+        iconAnchor:[22,22]
+      });
+
+      L.marker([place.latitude,place.longitude],{icon}).addTo(previewMarkers);
+    }
+
+    let ratingClass="neutral";
+    if(place.rating>0) ratingClass="positive";
+    if(place.rating<0) ratingClass="negative";
+
+    let upActive=place.user_vote===1?"active-up":"";
+    let downActive=place.user_vote===-1?"active-down":"";
+
+    // выбираем source для карусели карточки: используем place.photos если есть, иначе place.image (обложка)
+    const photosArr = Array.isArray(place.photos) && place.photos.length ? place.photos : (place.image ? [{ id: 0, image: place.image }] : []);
+    // build inner HTML for horizontal images (simple scroll)
+    let photosHtml = '';
+    if(photosArr.length){
+      photosHtml = `<div style="display:flex; gap:8px; overflow-x:auto; padding:8px 12px;">`;
+      photosArr.forEach(ph=>{
+        const src = buildImgUrl(ph.image || ph);
+        photosHtml += `<img src="${src}" style="height:120px; width:180px; object-fit:cover; border-radius:12px;">`;
+      });
+      photosHtml += `</div>`;
+    } else {
+      photosHtml = `<div style="height:120px; background:rgba(255,255,255,0.02); border-radius:12px;"></div>`;
+    }
+
+    container.innerHTML+=`
+    <div class="card" onclick="openPlace(${place.id})" style="cursor:pointer">
+      <div class="rating ${ratingClass}">${place.rating||0}°</div>
+      <div class="favorite" onclick="event.stopPropagation(); toggleFavorite(${place.id},this)">
+        ❤️
+      </div>
+
+      <div class="img-wrapper">
+        ${photosHtml}
+        <div class="img-gradient"></div>
+      </div>
+
+      <div class="card-content">
+        <h3>${place.name}</h3>
+        <p>💰 ${place.average_price||"-"} ₽</p>
+        <p>📍 ${place.street||"-"}</p>
+        <p>🏷 ${typeText || "-"}</p>
+        <p>⏰ ${place.work_time||"-"}</p>
+
+        <div class="vote-buttons">
+          <button class="vote-btn ${upActive}" onclick="event.stopPropagation(); vote(${place.id},1)">⬆</button>
+          <button class="vote-btn ${downActive}" onclick="event.stopPropagation(); vote(${place.id},-1)">⬇</button>
+        </div>
+
+      </div>
+    </div>`;
+
   });
 
-  data.sort((a,b)=>a.distance-b.distance);
-}
-  
-// 🔎 ПОИСК
-if(searchQuery){
-  data = data.filter(p =>
-    p.name && p.name.toLowerCase().includes(searchQuery)
-  );
-}
-  
-// 🔹 СОРТИРОВКА "ПОПУЛЯРНЫЕ"
-if(activeFilter === "popular"){
-  data = data.sort((a,b)=> (b.rating||0) - (a.rating||0));
-}
-
-
-// 🔥 Чистим карту
-if(previewMarkers){
-  previewMarkers.clearLayers();
-}
-
-data.forEach(place=>{
-
-const typeNames = {
-  1: "Бар",
-  2: "Кафе",
-  3: "Ресторан",
-  4: "Фастфуд"
-};
-
-const typeText = typeNames[place.type];
-  
-let emoji = "📍";
-
-if(place.type === 1) emoji = "🍸";
-if(place.type === 2) emoji = "☕";
-if(place.type === 3) emoji = "🍽";
-if(place.type === 4) emoji = "🍔";
-
-
-if(place.latitude && place.longitude){
-
-const icon = L.divIcon({
-className:"",
-html:`
-<div style="
-width:44px;
-height:44px;
-border-radius:50%;
-background:linear-gradient(135deg,#1d9bf0,#4da3ff);
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:20px;
-box-shadow:0 0 20px rgba(0,0,0,0.4);
-">
-${emoji}
-</div>
-`,
-iconSize:[44,44],
-iconAnchor:[22,22]
-});
-
-L.marker([place.latitude,place.longitude],{icon}).addTo(previewMarkers);
-}
-
-
-let ratingClass="neutral";
-if(place.rating>0) ratingClass="positive";
-if(place.rating<0) ratingClass="negative";
-
-let upActive=place.user_vote===1?"active-up":"";
-let downActive=place.user_vote===-1?"active-down":"";
-
-container.innerHTML+=`
-<div class="card" onclick="openPlace(${place.id})">
-<div class="rating ${ratingClass}">${place.rating||0}°</div>
-<div class="favorite" 
-     onclick="event.stopPropagation(); toggleFavorite(${place.id},this)">
-  ❤️
-</div>
-
-<div class="img-wrapper">
-<img src="${place.image||''}">
-<div class="img-gradient"></div>
-</div>
-
-<div class="card-content">
-<h3>${place.name}</h3>
-<p>💰 ${place.average_price||"-"} ₽</p>
-<p>📍 ${place.street||"-"}</p>
-<p>🏷 ${typeText || "-"}</p>
-<p>⏰ ${place.work_time||"-"}</p>
-
-<div class="vote-buttons">
-<button class="vote-btn ${upActive}" onclick="vote(${place.id},1)">⬆</button>
-<button class="vote-btn ${downActive}" onclick="vote(${place.id},-1)">⬇</button>
-</div>
-
-</div>
-</div>`;
-
-});
-
-setTimeout(()=>{
-  document.querySelectorAll(".card").forEach((card, index)=>{
-    setTimeout(()=>{
-      card.classList.add("show");
-    }, index * 50); // карточки появляются по очереди
-  });
-},10);
+  setTimeout(()=>{
+    document.querySelectorAll(".card").forEach((card, index)=>{
+      setTimeout(()=>{
+        card.classList.add("show");
+      }, index * 50);
+    });
+  },10);
 
 }
 
@@ -779,19 +869,40 @@ function openPlace(id){
 
   const typeText = typeNames[place.type] || "-";
 
+  // carousel для фото заведения (place.photos OR place.image)
+  const photos = Array.isArray(place.photos) && place.photos.length ? place.photos : (place.image ? [{id:0, image: place.image}] : []);
+  let headerCarousel = `<div style="display:flex; overflow-x:auto; scroll-snap-type:x mandatory;">`;
+  if(photos.length){
+    photos.forEach(ph=>{
+      const src = buildImgUrl(ph.image || ph);
+      headerCarousel += `<img src="${src}" style="width:100%; height:280px; object-fit:cover; scroll-snap-align:center;">`;
+    });
+  } else {
+    headerCarousel += `<div style="width:100%; height:280px; background:rgba(255,255,255,0.02)"></div>`;
+  }
+  headerCarousel += `</div>`;
+
+  // меню (place.menu)
+  const menuArr = Array.isArray(place.menu) ? place.menu : [];
+  let menuHtml = "";
+  if(menuArr.length){
+    menuHtml += `<div style="display:flex; gap:8px; overflow-x:auto; padding-top:8px;">`;
+    menuArr.forEach(m=>{
+      const src = buildImgUrl(m.image || m);
+      menuHtml += `<img src="${src}" style="height:160px; width:auto; max-width:70%; object-fit:cover; border-radius:12px; margin-right:10px;">`;
+    });
+    menuHtml += `</div>`;
+  } else {
+    menuHtml = `<p style="opacity:.6;">Пока нет фото меню</p>`;
+  }
+
   document.getElementById("placeDetailContent").innerHTML = `
   
   <div>
 
     <!-- HEADER -->
     <div style="position:relative;">
-
-      <div style="display:flex; overflow-x:auto; scroll-snap-type:x mandatory;">
-  <img src="${place.image || ''}" 
-       style="width:100%; height:280px; object-fit:cover; scroll-snap-align:center;">
-  <img src="${place.image || ''}" 
-       style="width:100%; height:280px; object-fit:cover; scroll-snap-align:center;">
-</div>
+      ${headerCarousel}
 
       <div style="
           position:absolute;
@@ -875,67 +986,29 @@ function openPlace(id){
 
       <!-- MENU -->
       <h3 style="margin-top:30px;">📋 Фото меню</h3>
-      <div id="menuPhotosContainer" style="margin-top:10px;"></div>
+      <div id="menuPhotosContainer" style="margin-top:10px;">
+        ${menuHtml}
+      </div>
 
       <!-- REVIEWS -->
       <h3 style="margin-top:30px;">⭐ Отзывы</h3>
 
+      <!-- (далее — твой существующий блок отзывов и форма) -->
+      <div style="margin-top:15px;">
 
-<div style="margin-top:15px;">
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button onclick="selectRecommendation('positive')" class="rec-btn" id="rec-positive" style="flex:1; padding:8px; border-radius:10px; border:none;">✅ Рекомендую</button>
+          <button onclick="selectRecommendation('neutral')" class="rec-btn" id="rec-neutral" style="flex:1; padding:8px; border-radius:10px; border:none;">➖ Нейтрально</button>
+          <button onclick="selectRecommendation('negative')" class="rec-btn" id="rec-negative" style="flex:1; padding:8px; border-radius:10px; border:none;">❌ Не рекомендую</button>
+        </div>
 
-  <!-- КНОПКИ РЕКОМЕНДАЦИИ -->
-  <div style="display:flex; gap:8px; margin-bottom:10px;">
-    <button onclick="selectRecommendation('positive')" 
-      class="rec-btn"
-      id="rec-positive"
-      style="flex:1; padding:8px; border-radius:10px; border:none;">
-      ✅ Рекомендую
-    </button>
+        <textarea id="reviewText" placeholder="Напишите отзыв..." style="width:100%; padding:10px; border-radius:12px; border:none; resize:none; min-height:80px; margin-bottom:10px; background:rgba(255,255,255,0.08); color:white;"></textarea>
 
-    <button onclick="selectRecommendation('neutral')" 
-      class="rec-btn"
-      id="rec-neutral"
-      style="flex:1; padding:8px; border-radius:10px; border:none;">
-      ➖ Нейтрально
-    </button>
+        <button onclick="submitReview(${place.id})" style="width:100%; padding:10px; border-radius:12px; border:none; background:#1d9bf0; color:white;">Отправить отзыв</button>
 
-    <button onclick="selectRecommendation('negative')" 
-      class="rec-btn"
-      id="rec-negative"
-      style="flex:1; padding:8px; border-radius:10px; border:none;">
-      ❌ Не рекомендую
-    </button>
-  </div>
+        <div id="reviewsContainer" style="margin-top:20px;"></div>
 
-  <!-- ТЕКСТ -->
-  <textarea id="reviewText"
-    placeholder="Напишите отзыв..."
-    style="
-      width:100%;
-      padding:10px;
-      border-radius:12px;
-      border:none;
-      resize:none;
-      min-height:80px;
-      margin-bottom:10px;
-      background:rgba(255,255,255,0.08);
-      color:white;"></textarea>
-
-  <!-- КНОПКА -->
-  <button onclick="submitReview(${place.id})"
-    style="
-      width:100%;
-      padding:10px;
-      border-radius:12px;
-      border:none;
-      background:#1d9bf0;
-      color:white;">
-    Отправить отзыв
-  </button>
-
-<div id="reviewsContainer" style="margin-top:20px;"></div>
-
-</div>
+      </div>
 
     </div>
 
@@ -960,9 +1033,6 @@ function openPlace(id){
   }
   loadReviews(id);
 }
-
-let selectedRecommendation = "neutral";
-
 function selectRecommendation(type){
 
   selectedRecommendation = type;
