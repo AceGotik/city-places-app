@@ -945,7 +945,7 @@ function submitReview(placeId){
 
   const user = Telegram.WebApp.initDataUnsafe.user;
 
-  fetch(API_BASE + `/places/${placeId}/review?recommendation=${selectedRecommendation}&text=${encodeURIComponent(text)}&username=${user.first_name}`,{
+  fetch(API_BASE + `/places/${placeId}/review?recommendation=${selectedRecommendation}&text=${encodeURIComponent(text)}&username=${encodeURIComponent(user.first_name)}`,{
     method: "POST",   // ← ВОТ ЭТО ОБЯЗАТЕЛЬНО
     headers:{
       "telegram-id": telegramId
