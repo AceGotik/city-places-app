@@ -23,6 +23,21 @@ padding-top:24px;
 padding-bottom:140px;
 }
 
+.photo-gallery{
+  display:flex;
+  overflow-x:auto;
+  gap:10px;
+  margin-top:10px;
+}
+
+.photo-gallery img{
+  width:250px;
+  height:180px;
+  object-fit:cover;
+  border-radius:12px;
+  flex-shrink:0;
+}
+
 /* ADS */
 .ads{
 display:flex;
@@ -534,6 +549,46 @@ setTimeout(()=>heart.remove(),1000);
 }
 }
 
+function renderGallery(place){
+
+  let html = `<div class="photo-gallery">`;
+
+  // Обложка
+  if(place.image){
+    html += `<img src="${API}${place.image}">`;
+  }
+
+  // Дополнительные фото заведения
+  if(place.photos && place.photos.length > 0){
+    place.photos.forEach(p=>{
+      html += `<img src="${API}${p.image}">`;
+    });
+  }
+
+  html += `</div>`;
+
+  return html;
+}
+
+function renderMenu(place){
+
+  if(!place.menu || place.menu.length === 0){
+    return "";
+  }
+
+  let html = `<h4 style="margin-top:15px;">Меню</h4>`;
+  html += `<div class="photo-gallery">`;
+
+  place.menu.forEach(m=>{
+    html += `<img src="${API}${m.image}">`;
+  });
+
+  html += `</div>`;
+
+  return html;
+}
+
+  
 function loadPlaces(){
   fetch(API_BASE + "/places_with_vote", {
     headers: {
@@ -1362,6 +1417,7 @@ document.getElementById("searchInput").addEventListener("input", function(){
     renderPlaces();
   }, 200);
 });
+
   
 initPreviewMap();
 loadPlaces();
