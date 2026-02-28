@@ -9,7 +9,7 @@ from typing import Optional
 from database import engine, Base, SessionLocal
 from models import (
     Place, User, Vote, Favorite, Banner, Visited,
-    Review, ReviewLike, MenuPhoto
+    Review, ReviewLike, MenuPhoto, PlacePhoto
 )
 import shutil
 import os
@@ -641,11 +641,6 @@ def upload_place_photos(
     telegram_id: int = Header(None),
     db: Session = Depends(get_db)
 ):
-    """
-    Загрузить несколько фото для заведения.
-    Сохраняет первое фото как основное (place.image = first).
-    Возвращает список url-ов.
-    """
     if telegram_id != ADMIN_ID:
         return {"error": "Нет доступа"}
 
@@ -653,24 +648,40 @@ def upload_place_photos(
     if not place:
         return {"error": "Не найдено"}
 
+    import uuid
     urls = []
 
     for file in files:
         unique_name = f"{uuid.uuid4()}_{file.filename}"
-        file_path = os.path.join("uploads", unique_name)
+        file_path = f"uploads/{unique_name}"
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        url = f"/uploads/{unique_name}"
-        urls.append(url)
+        photo = PlacePhoto(
+            place_id=place_id,
+            image=f"/{file_path}"
+        )
 
-    # сохраняем первое фото как основное
-    if urls:
+        db.add(photo)
+        urls.append(f"/{file_path}")
+
+    db.commit()
+
+    # первое фото — обложка если её нет
+    if not place.image and urls:
         place.image = urls[0]
         db.commit()
 
     return {"urls": urls}
+
+@app.get("/places/{place_id}/photos")
+def get_place_photos(place_id: int, db: Session = Depends(get_db)):
+    photos = db.query(PlacePhoto).filter(
+        PlacePhoto.place_id == place_id
+    ).all()
+
+    return photos
 
 
 @app.post("/admin/places/{place_id}/menu")
