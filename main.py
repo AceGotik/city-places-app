@@ -12,6 +12,12 @@ from sqlalchemy import Column, Integer, BigInteger, ForeignKey
 from models import Review
 from models import ReviewLike
 from models import MenuPhoto
+import shutil
+from fastapi import FastAPI
+import os
+
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
 
 app = FastAPI()
 
@@ -591,3 +597,67 @@ def get_menu_photos(
     ).all()
 
     return photos
+
+## админка
+
+@app.post("/admin/places/{place_id}/photos")
+def upload_place_photos(
+    place_id: int,
+    files: list[UploadFile] = File(...),
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    if telegram_id != ADMIN_ID:
+        return {"error": "Нет доступа"}
+
+    place = db.query(Place).filter(Place.id == place_id).first()
+    if not place:
+        return {"error": "Не найдено"}
+
+    urls = []
+
+    for file in files:
+        file_path = f"uploads/{file.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        urls.append(f"/{file_path}")
+
+    # сохраняем первое фото как основное
+    if urls:
+        place.image = urls[0]
+        db.commit()
+
+    return {"urls": urls}
+
+@app.post("/admin/places/{place_id}/menu")
+def upload_menu_photos(
+    place_id: int,
+    files: list[UploadFile] = File(...),
+    telegram_id: int = Header(None),
+    db: Session = Depends(get_db)
+):
+    if telegram_id != ADMIN_ID:
+        return {"error": "Нет доступа"}
+
+    urls = []
+
+    for file in files:
+        file_path = f"uploads/{file.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        photo = MenuPhoto(
+            place_id=place_id,
+            image=f"/{file_path}"
+        )
+        db.add(photo)
+        urls.append(f"/{file_path}")
+
+    db.commit()
+
+    return {"urls": urls}
+
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
