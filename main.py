@@ -490,9 +490,9 @@ def get_reviews(
     "username": r.username,   # ← ВОТ ЭТО ДОБАВИТЬ
     "telegram_id": r.telegram_id,
     "created_at": r.created_at,
-    "is_mine": r.telegram_id == telegram_id
+    "is_mine": r.telegram_id == telegram_id,
     "likes": likes_count,
-    "user_liked": user_liked,
+    "user_liked": user_liked
 })
 
     return result
