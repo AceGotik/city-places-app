@@ -15,6 +15,8 @@ color:white;
 padding:20px;
 }
 
+h2{margin-top:0;}
+
 input, select{
 width:100%;
 padding:10px;
@@ -37,264 +39,302 @@ margin-top:8px;
 
 .card{
 background:rgba(255,255,255,0.08);
-padding:14px;
+padding:12px;
 border-radius:12px;
-margin-top:12px;
-}
-
-.photo-grid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:8px;
 margin-top:10px;
 }
 
-.photo-grid img{
-width:100%;
-border-radius:8px;
+.tabs{
+display:flex;
+gap:10px;
+margin-bottom:20px;
 }
-hr{opacity:.2;margin:25px 0;}
+
+.tabs button{
+flex:1;
+background:rgba(255,255,255,0.08);
+color:white;
+}
+
+.tabs button.active{
+background:#3b82f6;
+}
+
+.tab{ display:none; }
+.tab.active{ display:block; }
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.modal-content{
+background:#1e293b;
+padding:20px;
+border-radius:12px;
+width:95%;
+max-width:500px;
+}
 </style>
 </head>
 
 <body>
 
 <h2>Admin Panel</h2>
-<div id="accessMessage"></div>
-<div id="adminContent" style="display:none;">
 
-<h3 id="formTitle">Добавить заведение</h3>
+<div class="tabs">
+  <button id="tabBtnPlaces" class="active" onclick="showTab('places')">Заведения</button>
+  <button id="tabBtnBanners" onclick="showTab('banners')">Баннеры</button>
+</div>
 
-<input id="name" placeholder="Название">
-<input id="average_price" placeholder="Средний чек">
-<input id="street" placeholder="Улица">
-<select id="type">
-  <option value="1">Бар</option>
-  <option value="2">Кафе</option>
-  <option value="3">Ресторан</option>
-  <option value="4">Фастфуд</option>
-</select>
-<input id="work_time" placeholder="График работы">
-<input id="latitude" placeholder="Широта">
-<input id="longitude" placeholder="Долгота">
+<!-- ================= PLACES ================= -->
 
-<button class="add-btn" onclick="savePlace()">Сохранить</button>
+<div id="tab-places" class="tab active">
+
+<h3>Добавить заведение</h3>
+
+<input id="newName" placeholder="Название">
+<input id="newPrice" placeholder="Средний чек">
+<input id="newStreet" placeholder="Улица">
+<input id="newWorkTime" placeholder="График">
+<input id="newLatitude" placeholder="Широта">
+<input id="newLongitude" placeholder="Долгота">
+
+<button class="add-btn" onclick="addPlace()">Добавить</button>
 
 <hr>
 
-<input id="adminSearch" placeholder="Поиск...">
 <div id="placesList"></div>
 
 </div>
 
+<!-- ================= BANNERS ================= -->
+
+<div id="tab-banners" class="tab">
+<h3>Добавить баннер</h3>
+<input id="bannerImage" placeholder="URL картинки">
+<input id="bannerLink" placeholder="Ссылка">
+<button class="add-btn" onclick="addBanner()">Добавить</button>
+<div id="bannersList"></div>
+</div>
+
+<!-- ================= MODAL ================= -->
+
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <h3>Редактирование заведения</h3>
+
+    <input id="editName" placeholder="Название">
+    <input id="editPrice" placeholder="Средний чек">
+    <input id="editStreet" placeholder="Улица">
+    <input id="editWorkTime" placeholder="График">
+    <input id="editLatitude" placeholder="Широта">
+    <input id="editLongitude" placeholder="Долгота">
+
+    <h4>Фото заведения</h4>
+    <input type="file" id="placePhotos" multiple>
+
+    <h4>Фото меню</h4>
+    <input type="file" id="menuPhotos" multiple>
+
+    <button class="add-btn" onclick="saveEdit()">Сохранить</button>
+    <button class="delete-btn" onclick="closeModal()">Закрыть</button>
+  </div>
+</div>
+
 <script>
+
 Telegram.WebApp.expand();
 
-const API_BASE="https://city-places-app-production.up.railway.app";
-const telegramId=Telegram.WebApp.initDataUnsafe?.user?.id;
-const ADMIN_ID=315901039;
-let editingId=null;
+const API = "https://city-places-app-production.up.railway.app";
+const telegramId = Telegram.WebApp.initDataUnsafe?.user?.id;
+const ADMIN_ID = 315901039;
 
-if(!telegramId){
- accessMessage.innerText="Открой через Telegram";
-}else if(telegramId!=ADMIN_ID){
- accessMessage.innerText="Нет доступа";
-}else{
- adminContent.style.display="block";
- loadPlaces();
+let editingId = null;
+
+function showTab(tab){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+
+  document.getElementById("tab-"+tab).classList.add("active");
+  document.getElementById("tabBtn"+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add("active");
 }
 
-function savePlace(){
- const data={
-  name:name.value.trim(),
-  average_price:average_price.value?parseInt(average_price.value):null,
-  street:street.value||null,
-  type:type.value||null,
-  work_time:work_time.value||null,
-  latitude:latitude.value?parseFloat(latitude.value):null,
-  longitude:longitude.value?parseFloat(longitude.value):null
- };
-
- if(editingId){
-  fetch(API_BASE+`/admin/places/${editingId}`,{
-   method:"PUT",
-   headers:{
-    "Content-Type":"application/json",
-    "telegram-id":telegramId
-   },
-   body:JSON.stringify(data)
-  }).then(()=>{
-   editingId=null;
-   clearInputs();
-   loadPlaces();
-  });
- }else{
-  fetch(API_BASE+"/places",{
-   method:"POST",
-   headers:{"Content-Type":"application/json"},
-   body:JSON.stringify(data)
-  }).then(()=>{
-   clearInputs();
-   loadPlaces();
-  });
- }
-}
+// ================= PLACES =================
 
 function loadPlaces(){
- fetch(API_BASE+"/places")
- .then(r=>r.json())
- .then(data=>{
-  const q=adminSearch.value?.toLowerCase()||"";
-  placesList.innerHTML="";
-
-  data.filter(p=>p.name.toLowerCase().includes(q))
-  .forEach(place=>{
-
-   placesList.innerHTML+=`
-   <div class="card">
-
-    <b>${place.name}</b><br>
-    💰 ${place.average_price||"-"} ₽<br>
-    ⭐ ${place.rating||0}<br><br>
-
-    <button class="edit-btn" onclick="editPlace(${place.id})">
-     Редактировать
-    </button>
-
-    <button class="delete-btn" onclick="deletePlace(${place.id})">
-     Удалить
-    </button>
-
-    <hr>
-
-    <b>Фото заведения:</b>
-    <input type="file" multiple onchange="uploadPlacePhotos(${place.id},this)">
-    <div class="photo-grid" id="placePhotos-${place.id}"></div>
-
-    <hr>
-
-    <b>Фото меню:</b>
-    <input type="file" multiple onchange="uploadMenuPhotos(${place.id},this)">
-    <div class="photo-grid" id="menuPhotos-${place.id}"></div>
-
-   </div>
-   `;
-
-   loadPlacePhotos(place.id);
-   loadMenuPhotos(place.id);
+  fetch(API + "/places")
+  .then(res=>res.json())
+  .then(data=>{
+    placesList.innerHTML="";
+    data.forEach(p=>{
+      placesList.innerHTML+=`
+        <div class="card">
+          <b>${p.name}</b><br>
+          💰 ${p.average_price || "-"} ₽<br>
+          📍 ${p.street || "-"}<br>
+          ⭐ ${p.rating || 0}<br><br>
+          <button class="edit-btn" onclick="openEdit(${p.id})">Редактировать</button>
+          <button class="delete-btn" onclick="deletePlace(${p.id})">Удалить</button>
+        </div>
+      `;
+    });
   });
- });
 }
 
-function editPlace(id){
- fetch(API_BASE+"/places")
- .then(r=>r.json())
- .then(data=>{
-  const p=data.find(x=>x.id===id);
-  if(!p)return;
-
-  name.value=p.name;
-  average_price.value=p.average_price||"";
-  street.value=p.street||"";
-  type.value=p.type||"";
-  work_time.value=p.work_time||"";
-  latitude.value=p.latitude||"";
-  longitude.value=p.longitude||"";
-
-  editingId=id;
- });
+function addPlace(){
+  fetch(API+"/places",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      name:newName.value,
+      average_price:parseInt(newPrice.value)||null,
+      street:newStreet.value||null,
+      work_time:newWorkTime.value||null,
+      latitude:parseFloat(newLatitude.value)||null,
+      longitude:parseFloat(newLongitude.value)||null
+    })
+  }).then(()=>loadPlaces());
 }
 
 function deletePlace(id){
- if(!confirm("Удалить?"))return;
- fetch(API_BASE+`/admin/places/${id}`,{
-  method:"DELETE",
-  headers:{"telegram-id":telegramId}
- }).then(loadPlaces);
+  fetch(API+`/admin/places/${id}`,{
+    method:"DELETE",
+    headers:{"telegram-id":telegramId}
+  }).then(()=>loadPlaces());
 }
 
-function uploadPlacePhotos(id,input){
- const formData=new FormData();
- for(let file of input.files){
-  formData.append("files",file);
- }
+// ================= EDIT =================
 
- fetch(API_BASE+`/admin/places/${id}/photos`,{
-  method:"POST",
-  headers:{"telegram-id":telegramId},
-  body:formData
- }).then(()=>loadPlacePhotos(id));
-}
-
-function loadPlacePhotos(id){
- fetch(API_BASE+`/admin/places/${id}/photos`)
- .then(r=>r.json())
- .then(data=>{
-  const container=document.getElementById(`placePhotos-${id}`);
-  container.innerHTML="";
-  data.forEach(p=>{
-   container.innerHTML+=`
-    <div>
-     <img src="${p.image}">
-     <button class="delete-btn"
-       onclick="deletePhoto(${p.id},${id})">X</button>
-    </div>
-   `;
+function openEdit(id){
+  editingId=id;
+  fetch(API+"/places")
+  .then(res=>res.json())
+  .then(data=>{
+    const p=data.find(x=>x.id===id);
+    editName.value=p.name;
+    editPrice.value=p.average_price||"";
+    editStreet.value=p.street||"";
+    editWorkTime.value=p.work_time||"";
+    editLatitude.value=p.latitude||"";
+    editLongitude.value=p.longitude||"";
+    editModal.style.display="flex";
   });
- });
 }
 
-function deletePhoto(photoId,placeId){
- fetch(API_BASE+`/admin/photos/${photoId}`,{
-  method:"DELETE",
-  headers:{"telegram-id":telegramId}
- }).then(()=>loadPlacePhotos(placeId));
+function closeModal(){
+  editModal.style.display="none";
 }
 
-function uploadMenuPhotos(id,input){
- const formData=new FormData();
- for(let file of input.files){
-  formData.append("files",file);
- }
+function saveEdit(){
 
- fetch(API_BASE+`/admin/places/${id}/menu`,{
-  method:"POST",
-  headers:{"telegram-id":telegramId},
-  body:formData
- }).then(()=>loadMenuPhotos(id));
-}
+  fetch(API+`/admin/places/${editingId}`,{
+    method:"PUT",
+    headers:{
+      "Content-Type":"application/json",
+      "telegram-id":telegramId
+    },
+    body:JSON.stringify({
+      name:editName.value,
+      average_price:parseInt(editPrice.value)||null,
+      street:editStreet.value||null,
+      work_time:editWorkTime.value||null,
+      latitude:parseFloat(editLatitude.value)||null,
+      longitude:parseFloat(editLongitude.value)||null
+    })
+  }).then(()=>{
 
-function loadMenuPhotos(id){
- fetch(API_BASE+`/admin/places/${id}/menu`)
- .then(r=>r.json())
- .then(data=>{
-  const container=document.getElementById(`menuPhotos-${id}`);
-  container.innerHTML="";
-  data.forEach(p=>{
-   container.innerHTML+=`
-    <div>
-     <img src="${p.image}">
-     <button class="delete-btn"
-       onclick="deleteMenuPhoto(${p.id},${id})">X</button>
-    </div>
-   `;
+    uploadPhotos();
+    uploadMenu();
+
+    closeModal();
+    loadPlaces();
   });
- });
 }
 
-function deleteMenuPhoto(photoId,placeId){
- fetch(API_BASE+`/admin/menu/${photoId}`,{
-  method:"DELETE",
-  headers:{"telegram-id":telegramId}
- }).then(()=>loadMenuPhotos(placeId));
+function uploadPhotos(){
+  const files=document.getElementById("placePhotos").files;
+  if(files.length===0) return;
+
+  const formData=new FormData();
+  for(let f of files){
+    formData.append("files",f);
+  }
+
+  fetch(API+`/admin/places/${editingId}/photos`,{
+    method:"POST",
+    headers:{"telegram-id":telegramId},
+    body:formData
+  });
 }
 
-adminSearch.addEventListener("input",loadPlaces);
+function uploadMenu(){
+  const files=document.getElementById("menuPhotos").files;
+  if(files.length===0) return;
 
-function clearInputs(){
- document.querySelectorAll("input").forEach(i=>i.value="");
+  const formData=new FormData();
+  for(let f of files){
+    formData.append("files",f);
+  }
+
+  fetch(API+`/admin/places/${editingId}/menu`,{
+    method:"POST",
+    headers:{"telegram-id":telegramId},
+    body:formData
+  });
 }
+
+// ================= BANNERS =================
+
+function loadBanners(){
+  fetch(API+"/banners")
+  .then(res=>res.json())
+  .then(data=>{
+    bannersList.innerHTML="";
+    data.forEach(b=>{
+      bannersList.innerHTML+=`
+        <div class="card">
+          <img src="${b.image}" width="100%"><br>
+          ${b.link||""}<br>
+          <button class="delete-btn" onclick="deleteBanner(${b.id})">Удалить</button>
+        </div>
+      `;
+    });
+  });
+}
+
+function addBanner(){
+  fetch(API+"/admin/banners",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "telegram-id":telegramId
+    },
+    body:JSON.stringify({
+      image:bannerImage.value,
+      link:bannerLink.value||null
+    })
+  }).then(()=>loadBanners());
+}
+
+function deleteBanner(id){
+  fetch(API+`/admin/banners/${id}`,{
+    method:"DELETE",
+    headers:{"telegram-id":telegramId}
+  }).then(()=>loadBanners());
+}
+
+// INIT
+loadPlaces();
+loadBanners();
+
 </script>
-
 </body>
 </html>
