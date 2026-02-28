@@ -297,6 +297,7 @@ longitude:parseFloat(editLongitude.value)||null
 
 await uploadPhotos();
 await uploadMenu();
+await loadCurrentPhotos();
 
 closeModal();
 loadPlaces();
@@ -328,15 +329,38 @@ body:fd
 
 // LOAD CURRENT PHOTOS
 function loadCurrentPhotos(){
-fetch(API+`/places/${editingId}/photos`)
+
+fetch(API+`/admin/places/${editingId}/photos`)
 .then(r=>r.json())
 .then(data=>{
 currentPhotos.innerHTML="";
+
 data.forEach(photo=>{
+
 currentPhotos.innerHTML+=`
-<img src="${API}${photo.image}">
+<div style="position:relative">
+  <img src="${API}${photo.image}">
+  <button 
+    style="
+      position:absolute;
+      top:5px;
+      right:5px;
+      background:#ef4444;
+      color:white;
+      border:none;
+      border-radius:6px;
+      padding:4px 6px;
+      font-size:12px;
+    "
+    onclick="deletePhoto(${photo.id}, '${photo.type}')"
+  >
+    ✕
+  </button>
+</div>
 `;
+
 });
+
 });
 }
 
@@ -377,6 +401,25 @@ method:"DELETE",
 headers:{"telegram-id":telegramId}
 }).then(()=>loadBanners());
 }
+
+function deletePhoto(id,type){
+
+let url="";
+
+if(type==="place"){
+  url=API+`/admin/place_photo/${id}`;
+}
+else if(type==="menu"){
+  url=API+`/admin/menu/${id}`;
+}
+
+fetch(url,{
+method:"DELETE",
+headers:{"telegram-id":telegramId}
+})
+.then(()=>loadCurrentPhotos());
+
+}  
 
 // HIDE KEYBOARD
 function hideKeyboard(){
