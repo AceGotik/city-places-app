@@ -1001,17 +1001,6 @@ function submitReview(placeId){
 
     <div>${review.text}</div>
 
-    ${review.is_mine ? `
-      <div style="
-        margin-top:8px;
-        font-size:13px;
-        color:#ff4d4d;
-        cursor:pointer;"
-        onclick="deleteReview(${review.id}, ${placeId})">
-        🗑 Удалить
-      </div>
-    ` : ""}
-
 <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
   
   <div style="cursor:pointer;"
