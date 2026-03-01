@@ -506,15 +506,16 @@ box-shadow:0 0 25px rgba(0,0,0,0.3);
 <div class="nav-item" onclick="switchTab('favorites')">❤️<br>Избранное</div>
 <div class="nav-item" onclick="switchTab('profile')">👤<br>Профиль</div>
 </div>
-  
-<script>
+  <script>
 Telegram.WebApp.expand();
 Telegram.WebApp.ready();
 
-const API_BASE="https://city-places-app-production.up.railway.app";
-const telegramId=Telegram.WebApp.initDataUnsafe?.user?.id; 
-console.log("TELEGRAM ID:", telegramId);
-let previewMap, fullMap, previewMarkers, fullMarkers;
+const API_BASE = "https://city-places-app-production.up.railway.app";
+const telegramId = Telegram.WebApp.initDataUnsafe?.user?.id;
+
+let previewMap, previewMarkers;
+let fullMapTab, fullMapMarkers;
+
 let allPlaces = [];
 let activeCategory = "all";
 let activeFilter = "all";
@@ -522,34 +523,27 @@ let searchQuery = "";
 let userLocation = null;
 let searchTimeout;
 
+let currentGallery = [];
+let currentIndex = 0;
+let selectedRecommendation = "neutral";
+
+
+// ======================
+// УТИЛИТЫ
+// ======================
+
+function buildImgUrl(src){
+  if(!src) return "";
+  if(src.startsWith("http")) return src;
+  if(src.startsWith("/")) return API_BASE + src;
+  return API_BASE + "/" + src;
+}
+
 function isNew(createdAt){
   const now = new Date();
   const created = new Date(createdAt);
   const diff = (now - created) / (1000*60*60*24);
   return diff <= 14;
-}
-
-// Гео Локация 
-  
-function getUserLocation(){
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(pos=>{
-      userLocation = {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude
-      };
-      navigator.geolocation.getCurrentPosition(pos=>{
-  userLocation = {
-    lat: pos.coords.latitude,
-    lng: pos.coords.longitude
-  };
-
-  if(activeFilter === "near"){
-    renderPlaces();
-  }
-});
-    });
-  }
 }
 
 function getDistance(lat1, lon1, lat2, lon2){
@@ -565,8 +559,25 @@ function getDistance(lat1, lon1, lat2, lon2){
   return R * c;
 }
 
-// Карта
-  
+
+// ======================
+// ГЕОЛОКАЦИЯ
+// ======================
+
+function getUserLocation(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      userLocation = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude
+      };
+    });
+  }
+}
+    // ======================
+// PREVIEW MAP
+// ======================
+
 function initPreviewMap(){
 
   previewMap = L.map('map',{
@@ -579,7 +590,6 @@ function initPreviewMap(){
     { subdomains:'abcd', maxZoom:20 }
   ).addTo(previewMap);
 
-  // 🔒 Полностью делаем карту статичной
   previewMap.dragging.disable();
   previewMap.scrollWheelZoom.disable();
   previewMap.doubleClickZoom.disable();
@@ -594,275 +604,62 @@ document.getElementById("map").onclick = () => {
   switchTab('map');
 };
 
-// Профиль
 
- function loadProfile(){
+// ======================
+// FULL MAP
+// ======================
 
-  const user = Telegram.WebApp.initDataUnsafe?.user;
+function initFullMap(){
 
-  if(!user){
-    console.log("No Telegram user data");
-    return;
-  }
+  fullMapTab = L.map('fullMapTab',{
+    zoomControl:true,
+    attributionControl:false
+  }).setView([53.9045,27.5615],13);
 
-  // Имя
-  document.getElementById("profileName").innerText =
-    user.first_name + (user.last_name ? " " + user.last_name : "");
+  L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    { subdomains:'abcd', maxZoom:20 }
+  ).addTo(fullMapTab);
 
-  // Username
-  document.getElementById("profileUsername").innerText =
-    user.username ? "@" + user.username : "";
-
-  // Аватар
-  document.getElementById("profileAvatar").src =
-    user.photo_url || "https://via.placeholder.com/110";
-
-  // Контент
-  document.getElementById("profileContent").innerHTML =
-    "<p style='opacity:.6;text-align:center;'>Профиль пользователя</p>";
-} 
-  
-// Сердца
-  
-function createHearts(){
-for(let i=0;i<6;i++){
-let heart=document.createElement("div");
-heart.className="floating-heart";
-heart.innerText="💖";
-heart.style.left=Math.random()*window.innerWidth+"px";
-heart.style.top=(window.innerHeight-100)+"px";
-document.body.appendChild(heart);
-setTimeout(()=>heart.remove(),1000);
-}
+  fullMapMarkers = L.layerGroup().addTo(fullMapTab);
 }
 
-function renderGallery(place){
+function loadFullMapMarkers(){
 
-  let html = `<div class="photo-gallery">`;
+  if(!fullMapMarkers) return;
 
-  // Обложка
-  if(place.image){
-    html += `<img src="${API}${place.image}">`;
-  }
+  fullMapMarkers.clearLayers();
 
-  // Дополнительные фото заведения
-  if(place.photos && place.photos.length > 0){
-    place.photos.forEach(p=>{
-      html += `<img src="${API}${p.image}">`;
-    });
-  }
-
-  html += `</div>`;
-
-  return html;
-}
-
-function renderMenu(place){
-
-  if(!place.menu || place.menu.length === 0){
-    return "";
-  }
-
-  let html = `<h4 style="margin-top:15px;">Меню</h4>`;
-  html += `<div class="photo-gallery">`;
-
-  place.menu.forEach(m=>{
-    html += `<img src="${API}${m.image}">`;
-  });
-
-  html += `</div>`;
-
-  return html;
-}
-
-// ------------- утилиты -------------
-function imgUrl(path){
-  if(!path) return "";
-  // Если путь уже абсолютный (http) — возвращаем как есть
-  if(path.startsWith("http://") || path.startsWith("https://")) return path;
-  // Иначе добавляем API_BASE (следим, чтобы не получилось двойного //)
-  return API_BASE + (path.startsWith("/") ? path : "/" + path);
-}
-
-// рендер маленькой галереи в карточке
-function renderGalleryInline(place){
-  const photos = place.photos || [];
-  // если нет дополнительных фото — пробуем основное cover
-  if(photos.length === 0 && place.image){
-    return `<div class="card-thumb"><img src="${imgUrl(place.image)}" style="width:100%;height:120px;object-fit:cover;border-radius:12px"></div>`;
-  }
-  if(photos.length === 0) return `<div class="card-thumb" style="height:120px;background:#0b1220;border-radius:12px"></div>`;
-
-  // показываем 2 фото (если есть) — компактно
-  const imgs = photos.slice(0,2).map(p=>`<img src="${imgUrl(p.image)}" style="width:100%;height:120px;object-fit:cover;border-radius:12px">`).join("");
-  return `<div style="display:flex;gap:8px">${imgs}</div>`;
-}
-
-// рендер меню (ссылка показана в деталях)
-function renderMenuGallery(place){
-  const menu = place.menu || [];
-  if(menu.length === 0) return `<p style="opacity:.6;">Пока нет фото меню</p>`;
-  return `
-    <div style="display:flex;gap:8px;overflow-x:auto;padding-top:8px;">
-      ${menu.map(m=>`<img src="${imgUrl(m.image)}" style="height:160px;object-fit:cover;border-radius:12px;margin-right:8px">`).join("")}
-    </div>
-  `;
-}
-
-function buildImgUrl(src){
-  if(!src) return "";
-
-  // если уже полный URL
-  if(src.startsWith("http")) return src;
-
-  // если начинается с /uploads
-  if(src.startsWith("/")) return API_BASE + src;
-
-  return src;
-}
-
-function openLightbox(index, placeId){
-  const place = allPlaces.find(p=>p.id===placeId);
-  if(!place) return;
-
-  const photos = place.photos && place.photos.length
-    ? place.photos
-    : (place.image ? [{image: place.image}] : []);
-
-  document.getElementById("lightboxImg").src =
-    buildImgUrl(photos[index].image);
-
-  document.getElementById("lightbox").style.display="flex";
-}
-
-document.getElementById("lightbox").onclick = function(){
-  this.style.display="none";
-};
-  
-function loadPlaces(){
-  fetch(API_BASE + "/places_with_vote", {
-    headers: {
-      "telegram-id": telegramId
+  allPlaces.forEach(place=>{
+    if(place.latitude && place.longitude){
+      L.marker([
+        parseFloat(place.latitude),
+        parseFloat(place.longitude)
+      ]).addTo(fullMapMarkers);
     }
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    allPlaces = data;
-    renderPlaces();
   });
 }
+    // ======================
+// ЗАГРУЗКА МЕСТ
+// ======================
 
-// ---- helper: собирает правильный URL для картинки ----
-function buildImgUrl(src){
-  if(!src) return "";
-  // если уже абсолютная ссылка — оставляем
-  if(typeof src === "string" && (src.startsWith("http://") || src.startsWith("https://"))) return src;
-  // если относительный путь с ведущим слешем — прибавляем базу
-  if(src.startsWith("/")) return API_BASE + src;
-  // иначе просто возвращаем как есть
-  return src;
-}
-
- let currentGallery = [];
-let currentIndex = 0;
-
-function openLightbox(index, placeId){
-
-  const place = allPlaces.find(p=>p.id===placeId);
-  if(!place) return;
-
-  currentGallery = Array.isArray(place.photos) && place.photos.length
-    ? place.photos.map(p=>p.image)
-    : (place.image ? [place.image] : []);
-
-  currentIndex = index;
-
-  showLightboxImage();
-  document.getElementById("lightbox").style.display="flex";
-}
-
-function openMenuLightbox(index, placeId){
-
-  const place = allPlaces.find(p=>p.id===placeId);
-  if(!place || !place.menu) return;
-
-  currentGallery = place.menu.map(m=>m.image);
-  currentIndex = index;
-
-  showLightboxImage();
-  document.getElementById("lightbox").style.display="flex";
-}
-
-function showLightboxImage(){
-
-  if(!currentGallery.length) return;
-
-  const img = document.getElementById("lightboxImg");
-  img.src = buildImgUrl(currentGallery[currentIndex]);
-
-  document.getElementById("lightboxIndicator").innerText =
-    `${currentIndex + 1} / ${currentGallery.length}`;
-}
-
-function closeLightbox(){
-  document.getElementById("lightbox").style.display="none";
-}
-
-document.getElementById("lightbox").addEventListener("click", function(e){
-  if(e.target.id === "lightbox"){
-    closeLightbox();
-  }
-}); 
-
- let startX = 0;
-
-document.getElementById("lightboxImg").addEventListener("touchstart", e=>{
-  startX = e.touches[0].clientX;
-});
-
-document.getElementById("lightboxImg").addEventListener("touchend", e=>{
-  let diff = e.changedTouches[0].clientX - startX;
-
-  if(Math.abs(diff) > 50){
-    if(diff < 0){
-      nextImage();
-    } else {
-      prevImage();
-    }
-  }
-});
-
-function nextImage(){
-  if(currentIndex < currentGallery.length - 1){
-    currentIndex++;
-    showLightboxImage();
-  }
-}
-
-function prevImage(){
-  if(currentIndex > 0){
-    currentIndex--;
-    showLightboxImage();
-  }
-} 
-
-// ---- ЗАГРУЗКА мест: получаем фото + user-vote/info и мержим ----
 async function loadPlaces(){
   try {
-    // получаем сначала places (с photos и menu), затем places_with_vote (vote+fav info)
+
     const [placesRes, voteRes] = await Promise.all([
       fetch(API_BASE + "/places"),
-      fetch(API_BASE + "/places_with_vote", { headers: { "telegram-id": telegramId } })
+      fetch(API_BASE + "/places_with_vote", {
+        headers: { "telegram-id": telegramId }
+      })
     ]);
 
     const places = await placesRes.json();
     const votes = await voteRes.json();
 
     const votesMap = new Map();
-    (Array.isArray(votes) ? votes : []).forEach(v => votesMap.set(v.id, v));
+    votes.forEach(v => votesMap.set(v.id, v));
 
-    // мержим: берем все поля places + дополняем полями из votes (если есть)
-    allPlaces = (Array.isArray(places) ? places : []).map(p => {
+    allPlaces = places.map(p => {
       const v = votesMap.get(p.id) || {};
       return {
         ...p,
@@ -870,46 +667,48 @@ async function loadPlaces(){
         is_favorite: v.is_favorite ?? false,
         is_visited: v.is_visited ?? false,
         rating: v.rating ?? p.rating ?? 0,
-        // гарантируем, что photos и menu — массивы
-        photos: Array.isArray(p.photos) ? p.photos : (p.photos ? [p.photos] : []),
-        menu: Array.isArray(p.menu) ? p.menu : (p.menu ? [p.menu] : [])
+        photos: Array.isArray(p.photos) ? p.photos : [],
+        menu: Array.isArray(p.menu) ? p.menu : []
       };
     });
 
     renderPlaces();
+
   } catch (err) {
     console.error("loadPlaces error:", err);
   }
 }
+    // ======================
+// РЕНДЕР КАРТОЧЕК
+// ======================
 
-// ---- РЕНДЕР карточек со скролл-каруселью фото ----
 function renderPlaces(){
 
   let data = [...allPlaces];
-
-  const newBtn = document.getElementById("newFilter");
   const container = document.getElementById("placesContainer");
   container.innerHTML = "";
-    
+
+  const newBtn = document.getElementById("newFilter");
+
   let newPlaces = allPlaces.filter(p => p.created_at && isNew(p.created_at));
-  
+
   if(newPlaces.length > 0 && activeFilter !== "new"){
     newBtn.classList.add("new-glow");
   }else{
     newBtn.classList.remove("new-glow");
   }
-    
-  // 🔹 ФИЛЬТР ПО КАТЕГОРИИ
+
+  // ФИЛЬТР КАТЕГОРИИ
   if(activeCategory !== "all"){
     data = data.filter(p => parseInt(p.type) === activeCategory);
   }
 
-  // 🔹 ФИЛЬТР "НОВОЕ"
+  // ФИЛЬТР НОВОЕ
   if(activeFilter === "new"){
     data = data.filter(p => p.created_at && isNew(p.created_at));
   }
 
-  // 🔹 ФИЛЬТР "РЯДОМ"
+  // ФИЛЬТР РЯДОМ
   if(activeFilter === "near" && userLocation){
     data = data.filter(p => {
       if(!p.latitude || !p.longitude) return false;
@@ -922,25 +721,25 @@ function renderPlaces(){
       );
 
       p.distance = distance;
-      return distance <= 3; // радиус 3 км
+      return distance <= 3;
     });
 
     data.sort((a,b)=>a.distance-b.distance);
   }
-    
-  // 🔎 ПОИСК
+
+  // ПОПУЛЯРНЫЕ
+  if(activeFilter === "popular"){
+    data = data.sort((a,b)=> (b.rating||0) - (a.rating||0));
+  }
+
+  // ПОИСК
   if(searchQuery){
     data = data.filter(p =>
       p.name && p.name.toLowerCase().includes(searchQuery)
     );
   }
-    
-  // 🔹 СОРТИРОВКА "ПОПУЛЯРНЫЕ"
-  if(activeFilter === "popular"){
-    data = data.sort((a,b)=> (b.rating||0) - (a.rating||0));
-  }
 
-  // 🔥 Чистим карту
+  // ЧИСТИМ ПРЕВЬЮ КАРТУ
   if(previewMarkers){
     previewMarkers.clearLayers();
   }
@@ -954,15 +753,17 @@ function renderPlaces(){
       4: "Фастфуд"
     };
 
-    const typeText = typeNames[place.type];
-      
-    let emoji = "📍";
+    const typeText = typeNames[place.type] || "-";
 
-    if(place.type === 1) emoji = "🍸";
-    if(place.type === 2) emoji = "☕";
-    if(place.type === 3) emoji = "🍽";
-    if(place.type === 4) emoji = "🍔";
+    let ratingClass="neutral";
+    if(place.rating>0) ratingClass="positive";
+    if(place.rating<0) ratingClass="negative";
 
+    let upActive=place.user_vote===1?"active-up":"";
+    let downActive=place.user_vote===-1?"active-down":"";
+    let favActive=place.is_favorite?"active":"";
+
+    // МАРКЕР НА ПРЕВЬЮ КАРТЕ
     if(place.latitude && place.longitude){
 
       const icon = L.divIcon({
@@ -979,82 +780,64 @@ function renderPlaces(){
           font-size:20px;
           box-shadow:0 0 20px rgba(0,0,0,0.4);
         ">
-        ${emoji}
+        📍
         </div>
         `,
         iconSize:[44,44],
         iconAnchor:[22,22]
       });
 
-      L.marker([place.latitude,place.longitude],{icon}).addTo(previewMarkers);
+      L.marker([
+        parseFloat(place.latitude),
+        parseFloat(place.longitude)
+      ],{icon}).addTo(previewMarkers);
     }
 
-    let ratingClass="neutral";
-    if(place.rating>0) ratingClass="positive";
-    if(place.rating<0) ratingClass="negative";
+    // ОБЛОЖКА (ПЕРВОЕ ФОТО)
+    let coverImage = null;
 
-    let upActive=place.user_vote===1?"active-up":"";
-    let downActive=place.user_vote===-1?"active-down":"";
-
-    // выбираем source для карусели карточки: используем place.photos если есть, иначе place.image (обложка)
-    const photosArr = Array.isArray(place.photos) && place.photos.length ? place.photos : (place.image ? [{ id: 0, image: place.image }] : []);
-    // build inner HTML for horizontal images (simple scroll)
-    let photosHtml = '';
-    if(photosArr.length){
-      photosHtml = `<div style="display:flex; gap:8px; overflow-x:auto; padding:8px 12px;">`;
-      photosArr.forEach(ph=>{
-        const src = buildImgUrl(ph.image || ph);
-        photosHtml += `<img src="${src}" style="height:120px; width:180px; object-fit:cover; border-radius:12px;">`;
-      });
-      photosHtml += `</div>`;
-    } else {
-      photosHtml = `<div style="height:120px; background:rgba(255,255,255,0.02); border-radius:12px;"></div>`;
+    if(place.photos?.length){
+      coverImage = buildImgUrl(place.photos[0].image);
+    }
+    else if(place.image){
+      coverImage = buildImgUrl(place.image);
     }
 
     container.innerHTML+=`
-    <div class="card" onclick="openPlace(${place.id})" style="cursor:pointer">
+    <div class="card" onclick="openPlace(${place.id})">
+
       <div class="rating ${ratingClass}">${place.rating||0}°</div>
-      <div class="favorite" onclick="event.stopPropagation(); toggleFavorite(${place.id},this)">
+
+      <div class="favorite ${favActive}"
+           onclick="event.stopPropagation(); toggleFavorite(${place.id},this)">
         ❤️
       </div>
 
       <div class="img-wrapper">
-
-${(() => {
-
-  let coverImage = null;
-
-  if(Array.isArray(place.photos) && place.photos.length > 0){
-    coverImage = buildImgUrl(place.photos[0].image);
-  }
-  else if(place.image){
-    coverImage = buildImgUrl(place.image);
-  }
-
-  return coverImage
-    ? `<img src="${coverImage}" loading="lazy" style="width:100%; height:200px; object-fit:cover;">`
-    : `<div style="height:200px; background:rgba(255,255,255,0.05);"></div>`;
-
-})()}
-
-<div class="img-gradient"></div>
-</div>
+        ${
+          coverImage
+          ? `<img src="${coverImage}" loading="lazy">`
+          : `<div style="height:150px;background:#111"></div>`
+        }
+        <div class="img-gradient"></div>
+      </div>
 
       <div class="card-content">
         <h3>${place.name}</h3>
         <p>💰 ${place.average_price||"-"} ₽</p>
         <p>📍 ${place.street||"-"}</p>
-        <p>🏷 ${typeText || "-"}</p>
+        <p>🏷 ${typeText}</p>
         <p>⏰ ${place.work_time||"-"}</p>
 
         <div class="vote-buttons">
-          <button class="vote-btn ${upActive}" onclick="event.stopPropagation(); vote(${place.id},1)">⬆</button>
-          <button class="vote-btn ${downActive}" onclick="event.stopPropagation(); vote(${place.id},-1)">⬇</button>
+          <button class="vote-btn ${upActive}"
+                  onclick="event.stopPropagation(); vote(${place.id},1)">⬆</button>
+          <button class="vote-btn ${downActive}"
+                  onclick="event.stopPropagation(); vote(${place.id},-1)">⬇</button>
         </div>
 
       </div>
     </div>`;
-
   });
 
   setTimeout(()=>{
@@ -1064,8 +847,10 @@ ${(() => {
       }, index * 50);
     });
   },10);
-
 }
+    // ======================
+// ДЕТАЛЬНАЯ СТРАНИЦА
+// ======================
 
 function openPlace(id){
 
@@ -1086,81 +871,60 @@ function openPlace(id){
 
   const typeText = typeNames[place.type] || "-";
 
+  // =====================
+  // ГАЛЕРЕЯ ЗАВЕДЕНИЯ
+  // =====================
 
-  // =========================
-  // ГАЛЕРЕЯ ФОТО ЗАВЕДЕНИЯ
-  // =========================
-
-  const photos = Array.isArray(place.photos) && place.photos.length
+  const photos = place.photos?.length
     ? place.photos
     : (place.image ? [{image: place.image}] : []);
 
-  let headerCarousel = `
+  const galleryHtml = `
   <div class="detail-gallery">
-    ${photos.map((ph,index)=>{
-      const src = buildImgUrl(ph.image);
-      return `
-        <img 
-          src="${src}" 
-          loading="lazy"
-          onclick="openLightbox(${index}, ${place.id})"
-        >
-      `;
-    }).join("")}
-  </div>
-  `;
+    ${photos.map((ph,index)=>`
+      <img src="${buildImgUrl(ph.image)}"
+           loading="lazy"
+           onclick="openLightbox(${index},${place.id})">
+    `).join("")}
+  </div>`;
 
+  // =====================
+  // МЕНЮ
+  // =====================
 
-  // =========================
-  // ФОТО МЕНЮ
-  // =========================
-
-  const menuArr = Array.isArray(place.menu) ? place.menu : [];
   let menuHtml = "";
 
-  if(menuArr.length){
-
-    menuHtml += `<div class="menu-gallery">`;
-
-    menuArr.forEach((m,index)=>{
-      const src = buildImgUrl(m.image);
-      menuHtml += `
-        <img 
-          src="${src}" 
-          loading="lazy"
-          onclick="openMenuLightbox(${index}, ${place.id})"
-        >
-      `;
-    });
-
-    menuHtml += `</div>`;
-
-  } else {
-
+  if(place.menu?.length){
+    menuHtml = `
+      <div class="menu-gallery">
+        ${place.menu.map((m,index)=>`
+          <img src="${buildImgUrl(m.image)}"
+               loading="lazy"
+               onclick="openMenuLightbox(${index},${place.id})">
+        `).join("")}
+      </div>
+    `;
+  }else{
     menuHtml = `<p style="opacity:.6;">Пока нет фото меню</p>`;
-
   }
 
-
-  // =========================
-  // ОСНОВНОЙ HTML
-  // =========================
+  // =====================
+  // HTML
+  // =====================
 
   document.getElementById("placeDetailContent").innerHTML = `
-  
   <div>
 
-    <!-- HEADER -->
     <div style="position:relative;">
-      ${headerCarousel}
+      ${galleryHtml}
 
       <div style="
-          position:absolute;
-          bottom:0;
-          left:0;
-          width:100%;
-          padding:20px;
-          background:linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+        position:absolute;
+        bottom:0;
+        left:0;
+        width:100%;
+        padding:20px;
+        background:linear-gradient(to top, rgba(0,0,0,0.9), transparent);
       ">
         <h2 style="margin:0;">${place.name}</h2>
         <p style="margin:5px 0 0 0; opacity:.8;">
@@ -1185,7 +949,6 @@ function openPlace(id){
 
     <div style="padding:16px">
 
-      <!-- ACTION BUTTONS -->
       <div style="display:flex; gap:12px; margin-bottom:20px;">
 
         <button
@@ -1217,7 +980,6 @@ function openPlace(id){
 
       </div>
 
-      <!-- INFO -->
       <div>
         <p>📍 ${place.street || "-"}</p>
         <p>⏰ ${place.work_time || "-"}</p>
@@ -1225,26 +987,23 @@ function openPlace(id){
         <p>🏷 ${typeText}</p>
       </div>
 
-      <!-- MAP -->
       <div id="detailMap"
            style="height:220px;
                   border-radius:20px;
                   margin-top:20px;">
       </div>
 
-      <!-- MENU -->
       <h3 style="margin-top:30px;">📋 Фото меню</h3>
       ${menuHtml}
 
-      <!-- REVIEWS -->
       <h3 style="margin-top:30px;">⭐ Отзывы</h3>
 
       <div style="margin-top:15px;">
 
         <div style="display:flex; gap:8px; margin-bottom:10px;">
-          <button onclick="selectRecommendation('positive')" class="rec-btn" id="rec-positive" style="flex:1; padding:8px; border-radius:10px; border:none;">✅ Рекомендую</button>
-          <button onclick="selectRecommendation('neutral')" class="rec-btn" id="rec-neutral" style="flex:1; padding:8px; border-radius:10px; border:none;">➖ Нейтрально</button>
-          <button onclick="selectRecommendation('negative')" class="rec-btn" id="rec-negative" style="flex:1; padding:8px; border-radius:10px; border:none;">❌ Не рекомендую</button>
+          <button onclick="selectRecommendation('positive')" class="rec-btn" id="rec-positive" style="flex:1;padding:8px;border-radius:10px;border:none;">✅ Рекомендую</button>
+          <button onclick="selectRecommendation('neutral')" class="rec-btn" id="rec-neutral" style="flex:1;padding:8px;border-radius:10px;border:none;">➖ Нейтрально</button>
+          <button onclick="selectRecommendation('negative')" class="rec-btn" id="rec-negative" style="flex:1;padding:8px;border-radius:10px;border:none;">❌ Не рекомендую</button>
         </div>
 
         <textarea id="reviewText"
@@ -1276,35 +1035,117 @@ function openPlace(id){
       </div>
 
     </div>
+  </div>`;
 
-  </div>
-  `;
-
-
-  // =========================
-  // КАРТА
-  // =========================
-
+  // КАРТА ВНУТРИ КАРТОЧКИ
   if(place.latitude && place.longitude){
     setTimeout(()=>{
       const map = L.map('detailMap',{
         zoomControl:false,
         attributionControl:false
-      }).setView([place.latitude, place.longitude],15);
+      }).setView([
+        parseFloat(place.latitude),
+        parseFloat(place.longitude)
+      ],15);
 
       L.tileLayer(
         'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
         { subdomains:'abcd', maxZoom:20 }
       ).addTo(map);
 
-      L.marker([place.latitude, place.longitude]).addTo(map);
+      L.marker([
+        parseFloat(place.latitude),
+        parseFloat(place.longitude)
+      ]).addTo(map);
 
     },100);
   }
 
   loadReviews(id);
 }
-  
+    // ======================
+// LIGHTBOX
+// ======================
+
+function openLightbox(index, placeId){
+
+  const place = allPlaces.find(p=>p.id===placeId);
+
+  currentGallery = place.photos?.length
+    ? place.photos.map(p=>p.image)
+    : [place.image];
+
+  currentIndex = index;
+
+  showLightboxImage();
+  document.getElementById("lightbox").style.display="flex";
+}
+
+function openMenuLightbox(index, placeId){
+
+  const place = allPlaces.find(p=>p.id===placeId);
+
+  currentGallery = place.menu.map(m=>m.image);
+  currentIndex = index;
+
+  showLightboxImage();
+  document.getElementById("lightbox").style.display="flex";
+}
+
+function showLightboxImage(){
+
+  const img = document.getElementById("lightboxImg");
+  img.src = buildImgUrl(currentGallery[currentIndex]);
+
+  document.getElementById("lightboxIndicator").innerText =
+    `${currentIndex+1} / ${currentGallery.length}`;
+}
+
+function closeLightbox(){
+  document.getElementById("lightbox").style.display="none";
+}
+
+document.getElementById("lightbox").addEventListener("click", function(e){
+  if(e.target.id === "lightbox"){
+    closeLightbox();
+  }
+});
+
+let startX = 0;
+
+document.getElementById("lightboxImg").addEventListener("touchstart", e=>{
+  startX = e.touches[0].clientX;
+});
+
+document.getElementById("lightboxImg").addEventListener("touchend", e=>{
+  let diff = e.changedTouches[0].clientX - startX;
+
+  if(Math.abs(diff) > 50){
+    if(diff < 0){
+      nextImage();
+    } else {
+      prevImage();
+    }
+  }
+});
+
+function nextImage(){
+  if(currentIndex < currentGallery.length - 1){
+    currentIndex++;
+    showLightboxImage();
+  }
+}
+
+function prevImage(){
+  if(currentIndex > 0){
+    currentIndex--;
+    showLightboxImage();
+  }
+}
+    // ======================
+// ОТЗЫВЫ
+// ======================
+
 function selectRecommendation(type){
 
   selectedRecommendation = type;
@@ -1316,121 +1157,89 @@ function selectRecommendation(type){
   if(type === "positive"){
     document.getElementById("rec-positive").style.background = "#00cc66";
   }
-
-  if(type === "negative"){
-    document.getElementById("rec-negative").style.background = "#ff4d4d";
-  }
-
   if(type === "neutral"){
     document.getElementById("rec-neutral").style.background = "#666";
+  }
+  if(type === "negative"){
+    document.getElementById("rec-negative").style.background = "#ff4d4d";
   }
 }
 
 function submitReview(placeId){
 
-  if(!telegramId){
-    console.log("No telegram ID");
-    return;
-  }
-
   const text = document.getElementById("reviewText").value;
-
-  if(!text){
-    alert("Напишите отзыв");
-    return;
-  }
+  if(!text) return alert("Напишите отзыв");
 
   const user = Telegram.WebApp.initDataUnsafe.user;
 
   fetch(API_BASE + `/places/${placeId}/review?recommendation=${selectedRecommendation}&text=${encodeURIComponent(text)}&username=${encodeURIComponent(user.first_name)}`,{
-    method: "POST",   // ← ВОТ ЭТО ОБЯЗАТЕЛЬНО
-    headers:{
-      "telegram-id": telegramId
-    }
+    method:"POST",
+    headers:{ "telegram-id":telegramId }
   })
-  .then(res=>res.json())
-  .then(data=>{
+  .then(()=>{
+
     document.getElementById("reviewText").value="";
     loadReviews(placeId);
+
   });
 }
 
- function loadReviews(placeId){
+function loadReviews(placeId){
 
   fetch(API_BASE + `/places/${placeId}/reviews`,{
-    headers:{
-      "telegram-id": telegramId
-    }
+    headers:{ "telegram-id":telegramId }
   })
   .then(res=>res.json())
   .then(data=>{
 
     const container = document.getElementById("reviewsContainer");
-    container.innerHTML = "";
+    container.innerHTML="";
 
-    if(!data || data.length === 0){
-      container.innerHTML = "<p style='opacity:.6;'>Пока нет отзывов</p>";
+    if(!data.length){
+      container.innerHTML="<p style='opacity:.6;'>Пока нет отзывов</p>";
       return;
     }
 
     data.forEach(review=>{
 
-      let bg = "rgba(255,255,255,0.05)";
+      let bg="rgba(255,255,255,0.05)";
+      if(review.recommendation==="positive") bg="rgba(0,204,102,0.2)";
+      if(review.recommendation==="negative") bg="rgba(255,77,77,0.2)";
 
-      if(review.recommendation === "positive"){
-        bg = "rgba(0,204,102,0.2)";
-      }
+      container.innerHTML+=`
+      <div style="background:${bg};padding:12px;border-radius:14px;margin-bottom:10px;">
 
-      if(review.recommendation === "negative"){
-        bg = "rgba(255,77,77,0.2)";
-      }
+        <div style="font-weight:bold;margin-bottom:6px;">
+          ${review.username || "Пользователь"}
+        </div>
 
-      container.innerHTML += `
-  <div style="
-    background:${bg};
-    padding:12px;
-    border-radius:14px;
-    margin-bottom:10px;">
+        <div>${review.text}</div>
 
-    <div style="font-weight:bold; margin-bottom:6px;">
-      ${review.username || "Пользователь"}
-    </div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
 
-    <div>${review.text}</div>
+          <div style="cursor:pointer;"
+               onclick="toggleReviewLike(${review.id},${placeId})">
+            ${review.user_liked ? "👍" : "👍🏻"} ${review.likes}
+          </div>
 
-<div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
-  
-  <div style="cursor:pointer;"
-       onclick="toggleReviewLike(${review.id}, ${placeId})">
-    ${review.user_liked ? "👍" : "👍🏻"} ${review.likes}
-  </div>
+          ${review.is_mine ? `
+            <div style="font-size:13px;color:#ff4d4d;cursor:pointer;"
+                 onclick="deleteReview(${review.id},${placeId})">
+              🗑 Удалить
+            </div>` : ""}
 
-  ${review.is_mine ? `
-    <div style="
-      font-size:13px;
-      color:#ff4d4d;
-      cursor:pointer;"
-      onclick="deleteReview(${review.id}, ${placeId})">
-      🗑 Удалить
-    </div>
-  ` : ""}
-  
-</div>
+        </div>
 
-  </div>
-`;
+      </div>`;
     });
-
   });
-} 
+}
 
 function deleteReview(reviewId, placeId){
 
   fetch(API_BASE + `/reviews/${reviewId}`,{
     method:"DELETE",
-    headers:{
-      "telegram-id": telegramId
-    }
+    headers:{ "telegram-id":telegramId }
   })
   .then(()=>loadReviews(placeId));
 }
@@ -1439,135 +1248,194 @@ function toggleReviewLike(reviewId, placeId){
 
   fetch(API_BASE + `/reviews/${reviewId}/like`,{
     method:"POST",
-    headers:{
-      "telegram-id": telegramId
-    }
+    headers:{ "telegram-id":telegramId }
   })
   .then(()=>loadReviews(placeId));
 }
-
-function loadMenuPhotos(placeId){
-
-  fetch(API_BASE + `/places/${placeId}/menu_photos`)
-  .then(res=>res.json())
-  .then(data=>{
-
-    const container = document.getElementById("menuPhotosContainer");
-    container.innerHTML = "";
-
-    if(!data.length){
-      container.innerHTML = "<p style='opacity:.6;'>Пока нет фото меню</p>";
-      return;
-    }
-
-    data.forEach(photo=>{
-      container.innerHTML += `
-        <img src="${photo.image}" 
-             style="width:100%; border-radius:14px; margin-bottom:10px;">
-      `;
-    });
-
-  });
-}
+    // ======================
+// VOTE
+// ======================
 
 function vote(id, value){
 
-  if(!telegramId){
-    console.log("No telegram ID");
-    return;
-  }
-
   fetch(API_BASE + `/places/${id}/vote?value=${value}`,{
-    method: "POST",
-    headers: {
-      "telegram-id": telegramId
-    }
+    method:"POST",
+    headers:{ "telegram-id":telegramId }
   })
-  .then(res => res.json())
-  .then(() => {
-    loadPlaces();
-  })
-  .catch(err => {
-    console.log("Vote error:", err);
-  });
+  .then(()=>loadPlaces());
 }
+
+
+// ======================
+// ИЗБРАННОЕ
+// ======================
 
 function toggleFavorite(id, el){
 
-  if(!telegramId) return;
-
   fetch(API_BASE + `/places/${id}/favorite`,{
     method:"POST",
-    headers:{
-      "telegram-id": telegramId
-    }
+    headers:{ "telegram-id":telegramId }
   })
-  .then(res => res.json())
-  .then(data => {
+  .then(res=>res.json())
+  .then(data=>{
 
-    if(data.message === "Added"){
+    if(data.message==="Added"){
       el.classList.add("active");
-      createHearts();
-    }else if(data.message === "Removed"){
+    }else{
       el.classList.remove("active");
     }
-
   });
 }
 
 function toggleDetailFavorite(id){
 
-  if(!telegramId) return;
-
   fetch(API_BASE + `/places/${id}/favorite`,{
     method:"POST",
-    headers:{
-      "telegram-id": telegramId
-    }
+    headers:{ "telegram-id":telegramId }
   })
-  .then(res => res.json())
-  .then(data => {
+  .then(res=>res.json())
+  .then(data=>{
 
-    const btn = document.getElementById("detailFavBtn");
+    const btn=document.getElementById("detailFavBtn");
 
-    if(data.message === "Added"){
-      btn.innerText = "❤️ В избранном";
-      btn.style.background = "#00cc66";
-      createHearts();
+    if(data.message==="Added"){
+      btn.innerText="❤️ В избранном";
+      btn.style.background="#00cc66";
+    }else{
+      btn.innerText="❤️ В избранное";
+      btn.style.background="#ff2d55";
     }
-
-    if(data.message === "Removed"){
-      btn.innerText = "❤️ В избранное";
-      btn.style.background = "#ff2d55";
-    }
-
   });
 }
-  
-function loadBanners(){
-fetch(API_BASE + "/banners")
-.then(res => res.json())
-.then(data=>{
-const container = document.getElementById("adsContainer");
-container.innerHTML = "";
 
-data.forEach(banner=>{
-container.innerHTML += `
-<a href="${banner.link || '#'}" target="_blank">
-<img src="${banner.image}">
-</a>
-`;
-});
-});
+function toggleVisit(id){
+
+  fetch(API_BASE + `/places/${id}/visit`,{
+    method:"POST",
+    headers:{ "telegram-id":telegramId }
+  })
+  .then(()=>loadPlaces());
+}
+    // ======================
+// ПРОФИЛЬ
+// ======================
+
+function loadProfile(){
+
+  const user = Telegram.WebApp.initDataUnsafe?.user;
+  if(!user) return;
+
+  document.getElementById("profileName").innerText =
+    user.first_name + (user.last_name ? " "+user.last_name : "");
+
+  document.getElementById("profileUsername").innerText =
+    user.username ? "@"+user.username : "";
+
+  document.getElementById("profileAvatar").src =
+    user.photo_url || "https://via.placeholder.com/110";
+
+  document.getElementById("profileContent").innerHTML =
+    "<p style='opacity:.6;text-align:center;'>Профиль пользователя</p>";
 }
 
+
+// ======================
+// ИЗБРАННОЕ ВКЛАДКА
+// ======================
+
+function loadFavorites(){
+
+  fetch(API_BASE + "/favorites",{
+    headers:{ "telegram-id":telegramId }
+  })
+  .then(res=>res.json())
+  .then(data=>{
+
+    const container=document.getElementById("favoritesContainer");
+    container.innerHTML="";
+
+    if(!data.length){
+      container.innerHTML="<p style='opacity:.6'>Пока ничего нет</p>";
+      return;
+    }
+
+    data.forEach(place=>{
+
+      let cover = place.photos?.length
+        ? buildImgUrl(place.photos[0].image)
+        : buildImgUrl(place.image);
+
+      container.innerHTML+=`
+      <div class="card show" onclick="openPlace(${place.id})">
+
+        <div class="img-wrapper">
+          <img src="${cover || ''}">
+          <div class="img-gradient"></div>
+        </div>
+
+        <div class="card-content">
+          <h3>${place.name}</h3>
+          <p>💰 ${place.average_price||"-"} ₽</p>
+        </div>
+
+      </div>`;
+    });
+  });
+}
+
+
+// ======================
+// НАВИГАЦИЯ
+// ======================
+
+function switchTab(tab){
+
+  document.querySelectorAll(".screen")
+    .forEach(s=>s.classList.remove("active"));
+
+  document.querySelectorAll(".nav-item")
+    .forEach(n=>n.classList.remove("active"));
+
+  if(tab==="home"){
+    document.getElementById("homeScreen").classList.add("active");
+    document.querySelectorAll(".nav-item")[0].classList.add("active");
+  }
+
+  if(tab==="map"){
+    document.getElementById("mapTab").classList.add("active");
+    document.querySelectorAll(".nav-item")[1].classList.add("active");
+
+    if(!fullMapTab){
+      initFullMap();
+    }
+
+    setTimeout(()=>fullMapTab.invalidateSize(),200);
+    loadFullMapMarkers();
+  }
+
+  if(tab==="favorites"){
+    document.getElementById("favoritesTab").classList.add("active");
+    document.querySelectorAll(".nav-item")[2].classList.add("active");
+    loadFavorites();
+  }
+
+  if(tab==="profile"){
+    document.getElementById("profileTab").classList.add("active");
+    document.querySelectorAll(".nav-item")[3].classList.add("active");
+    loadProfile();
+  }
+}
+    // ======================
+// ФИЛЬТРЫ
+// ======================
+
 document.querySelectorAll(".filter-btn").forEach(btn=>{
-  btn.onclick = function(){
+  btn.onclick=function(){
 
-    const selected = this.dataset.filter;
+    const selected=this.dataset.filter;
 
-    if(activeFilter === selected){
-      activeFilter = "all";
+    if(activeFilter===selected){
+      activeFilter="all";
       document.querySelectorAll(".filter-btn")
         .forEach(b=>b.classList.remove("active"));
       renderPlaces();
@@ -1578,193 +1446,78 @@ document.querySelectorAll(".filter-btn").forEach(btn=>{
       .forEach(b=>b.classList.remove("active"));
 
     this.classList.add("active");
-
-    activeFilter = selected;
+    activeFilter=selected;
 
     renderPlaces();
   }
 });
 
-document.querySelectorAll(".cat").forEach(cat => {
-  cat.onclick = function(){
+document.querySelectorAll(".cat").forEach(cat=>{
+  cat.onclick=function(){
 
-    const selected = parseInt(this.dataset.type);
+    const selected=parseInt(this.dataset.type);
 
-    // 🔥 если нажали повторно — снимаем категорию
-    if(activeCategory === selected){
-      activeCategory = "all";
+    if(activeCategory===selected){
+      activeCategory="all";
       document.querySelectorAll(".cat")
-        .forEach(c => c.classList.remove("active"));
+        .forEach(c=>c.classList.remove("active"));
       renderPlaces();
       return;
     }
 
     document.querySelectorAll(".cat")
-      .forEach(c => c.classList.remove("active"));
+      .forEach(c=>c.classList.remove("active"));
 
     this.classList.add("active");
-
-    activeCategory = selected;
+    activeCategory=selected;
 
     renderPlaces();
   }
 });
-let fullMapTab;
-let fullMapMarkers;
 
-function switchTab(tab){
+document.getElementById("searchInput")
+.addEventListener("input",function(){
 
-  document.querySelectorAll(".screen")
-    .forEach(s=>s.classList.remove("active"));
-
-  document.querySelectorAll(".nav-item")
-    .forEach(n=>n.classList.remove("active"));
-
-  if(tab === "home"){
-    document.getElementById("homeScreen").classList.add("active");
-    document.querySelectorAll(".nav-item")[0].classList.add("active");
-  }
-
-  if(tab === "map"){
-    document.getElementById("mapTab").classList.add("active");
-    document.querySelectorAll(".nav-item")[1].classList.add("active");
-
-    if(!fullMapTab){
-
-      fullMapTab = L.map('fullMapTab',{
-        zoomControl:true,
-        attributionControl:false
-      }).setView([53.9045,27.5615],13);
-
-      L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        { subdomains:'abcd', maxZoom:20 }
-      ).addTo(fullMapTab);
-
-      fullMapMarkers = L.layerGroup().addTo(fullMapTab);
-    }
-
-    setTimeout(()=>fullMapTab.invalidateSize(),200);
-
-    loadFullMapMarkers();
-  }
-    
-    if(tab === "favorites"){
-  document.getElementById("favoritesTab").classList.add("active");
-  document.querySelectorAll(".nav-item")[2].classList.add("active");
-      
-  loadFavorites();
-
-  }
-
-  if(tab === "profile"){
-  document.getElementById("profileTab").classList.add("active");
-  document.querySelectorAll(".nav-item")[3].classList.add("active");
-  loadProfile();
-}
-}
-
-function toggleVisit(id){
-
-  if(!telegramId){
-    console.log("No telegram ID");
-    return;
-  }
-
-  fetch(API_BASE + `/places/${id}/visit`,{
-    method: "POST",
-    headers: {
-      "telegram-id": telegramId
-    }
-  })
-  .then(res => res.json())
-  .then(() => {
-
-    fetch(API_BASE + "/places_with_vote", {
-      headers: {
-        "telegram-id": telegramId
-      }
-    })
-    .then(res => res.json())
-    .then(data => {
-      allPlaces = data;
-      openPlace(id);
-    });
-
-  });
-}
-  
-function markVisited(id){
-
-  fetch(API_BASE+`/places/${id}/visit?telegram_id=${telegramId}`,{
-    method:"POST"
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    alert(data.message === "Added"
-      ? "✔ Отмечено как посещенное"
-      : "❌ Убрано из посещенных");
-  });
-
-}
-
-function loadFavorites(){
-
-  if(!telegramId) return;
-
-  fetch(API_BASE + "/favorites", {
-    headers: {
-      "telegram-id": telegramId
-    }
-  })
-  .then(res => res.json())
-  .then(data => {
-
-    const container = document.getElementById("favoritesContainer");
-    container.innerHTML = "";
-
-    if(!data || data.length === 0){
-      container.innerHTML = "<p style='opacity:.6'>Пока ничего нет</p>";
-      return;
-    }
-
-    data.forEach(place=>{
-      container.innerHTML += `
-      <div class="card show">
-        <div class="rating">${place.rating || 0}°</div>
-
-        <div class="img-wrapper">
-          <img src="${place.image || ''}">
-          <div class="img-gradient"></div>
-        </div>
-
-        <div class="card-content">
-          <h3>${place.name}</h3>
-          <p>💰 ${place.average_price || "-"} ₽</p>
-          <p>⏰ ${place.work_time || "-"}</p>
-        </div>
-      </div>`;
-    });
-
-  });
-}
-
-
-  
-document.getElementById("searchInput").addEventListener("input", function(){
   clearTimeout(searchTimeout);
 
-  searchTimeout = setTimeout(()=>{
-    searchQuery = this.value.toLowerCase();
+  searchTimeout=setTimeout(()=>{
+    searchQuery=this.value.toLowerCase();
     renderPlaces();
-  }, 200);
+  },200);
 });
 
-  
+
+// ======================
+// БАННЕРЫ
+// ======================
+
+function loadBanners(){
+  fetch(API_BASE+"/banners")
+  .then(res=>res.json())
+  .then(data=>{
+
+    const container=document.getElementById("adsContainer");
+    container.innerHTML="";
+
+    data.forEach(banner=>{
+      container.innerHTML+=`
+        <a href="${banner.link || '#'}" target="_blank">
+          <img src="${banner.image}">
+        </a>`;
+    });
+  });
+}
+
+
+// ======================
+// INIT
+// ======================
+
 initPreviewMap();
 loadPlaces();
 loadBanners();
 getUserLocation();
+
 </script>
 
 </body>
